@@ -1,0 +1,2 @@
+Nie możliwe do wykrycia dla nowego użytkownika sieci z pełną pewnością. Natomiast jedną z oznak kogoś spoofingującego adresy MAC może być powtarzający się adres MAC dla dwóch różnych adresów IP. Można to próbować przechwycić za pomocą karty sieciowej z trybem monitor:
+Karta w trybie monitor przechwytuje dwa pakiety ARP i wykrywa konflikt, jeden pakiet mówi `ADRES MAC X MA URZĄDZENIE X`, `ADRES MAC X MA URZĄDZENIE Y`. Na tej podstawie możemy uznać, że istnieje podejrzenie ARP spoofingu.
