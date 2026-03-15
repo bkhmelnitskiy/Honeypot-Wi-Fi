@@ -1,0 +1,1 @@
+Ktoś podszywa się pod serwer DNS i rozsyła w sieci odpowiedzi na zapytania o domeny. Aby sprawdzić czy taki atakujący jest w sieci trzeba byłoby np inspektować odpowiedzi DNS i badać z jakąś zaufaną bazą czy ktoś nie rozsyła fałszywych adresów. Ewentualnie posiadać wskaźniki typowej ilości pakietów DNS i sprawdzać czy nie występuje ich za dużo w danej sieci.
