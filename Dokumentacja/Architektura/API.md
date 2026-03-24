@@ -306,43 +306,6 @@ Błędy:
 | `detected_at` | timestamp | Moment wykrycia ataku |
 | `details` | object | Szczegóły specyficzne dla typu ataku (np. attacker_mac, spoofed_domain) |
 
-#### POST /sync/batch
-Batch upload wielu skanów naraz. Używane przez Sync Engine. Maksymalnie 50 skanów w jednym zapytaniu.
-
-```
-Request:
-{
-  "scans": [ ...tablica obiektów skanu jak wyżej (max 50)... ]
-}
-
-Response 207 Multi-Status:
-{
-  "results": [
-    {
-      "client_scan_id": "uuid",
-      "status": "CREATED",
-      "server_scan_id": "uuid",
-      "error": null
-    },
-    {
-      "client_scan_id": "uuid",
-      "status": "REJECTED",
-      "server_scan_id": null,
-      "error": {
-        "error": "DUPLICATE",
-        "message": "Skan o tym client_scan_id już istnieje"
-      }
-    }
-  ]
-}
-
-Każdy skan jest walidowany niezależnie. Odrzucenie jednego
-nie blokuje pozostałych.
-
-Błędy:
-  413 - przekroczono limit 50 skanów w batch
-  401 - brak autoryzacji
-```
 
 #### GET /scans
 Lista skanów użytkownika. Wymaga uwierzytelnienia.
@@ -565,6 +528,43 @@ z since=next_since aby pobrać pozostałe aktualizacje.
 Używane przez Sync Engine do odświeżenia lokalnego cache community.
 ```
 
+#### POST /sync/batch
+Batch upload wielu skanów naraz. Używane przez Sync Engine. Maksymalnie 50 skanów w jednym zapytaniu.
+
+```
+Request:
+{
+  "scans": [ ...tablica obiektów skanu jak wyżej (max 50)... ]
+}
+
+Response 207 Multi-Status:
+{
+  "results": [
+    {
+      "client_scan_id": "uuid",
+      "status": "CREATED",
+      "server_scan_id": "uuid",
+      "error": null
+    },
+    {
+      "client_scan_id": "uuid",
+      "status": "REJECTED",
+      "server_scan_id": null,
+      "error": {
+        "error": "DUPLICATE",
+        "message": "Skan o tym client_scan_id już istnieje"
+      }
+    }
+  ]
+}
+
+Każdy skan jest walidowany niezależnie. Odrzucenie jednego
+nie blokuje pozostałych.
+
+Błędy:
+  413 - przekroczono limit 50 skanów w batch
+  401 - brak autoryzacji
+```
 ---
 
 ## 2. Protokół komend BLE (Mobile App <-> Honeypot)
