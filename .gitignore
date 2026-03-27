@@ -1,0 +1,4 @@
+/webserver/dist/*
+/webserver/node_modules/*
+/webserver/.env
+random/*
