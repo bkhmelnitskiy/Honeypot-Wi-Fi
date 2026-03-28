@@ -46,7 +46,7 @@ export class SyncController {
       @CurrentUser() user: { user_id: string },
       @Body() dto: ScanUploadDto,
     ) {
-      return this.syncService.create(user.user_id, dto);
+      return this.syncService.uploadScan(user.user_id, dto);
     }
   
 }
