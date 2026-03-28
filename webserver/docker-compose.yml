@@ -1,0 +1,36 @@
+services:
+  api:
+    build:
+      context: .
+      target: dev
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+    command: npm run start:dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-honeypot}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-honeypot}
+      POSTGRES_DB: ${DB_DATABASE:-honeypot}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'honeypot']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
