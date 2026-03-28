@@ -8,10 +8,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
-import { CurrentUser } from '../common/decorators/current-user.decorator.js';
-import { ScansService } from './scans.service.js';
-import { QueryScansDto } from './dto/query-scans.dto.js';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ScansService } from './scans.service';
+import { QueryScansDto } from './dto/query-scans.dto';
 
 @Controller('scans')
 @UseGuards(JwtAuthGuard)

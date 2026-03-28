@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScansController } from './scans.controller.js';
-import { ScansService } from './scans.service.js';
-import { Scan } from './entities/scan.entity.js';
-import { Attack } from './entities/attack.entity.js';
-import { Network } from '../networks/entities/network.entity.js';
+import { ScansController } from './scans.controller';
+import { ScansService } from './scans.service';
+import { Scan } from './entities/scan.entity';
+import { Attack } from './entities/attack.entity';
+import { Network } from '../networks/entities/network.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Scan, Attack, Network])],

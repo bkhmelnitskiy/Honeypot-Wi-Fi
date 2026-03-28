@@ -1,5 +1,5 @@
 import { IsOptional, IsUUID, IsDateString } from 'class-validator';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 export class QueryScansDto extends PaginationQueryDto {
   @IsOptional()

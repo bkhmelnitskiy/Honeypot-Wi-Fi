@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Scan } from './scan.entity.js';
+import { Scan } from './scan.entity';
 
 export enum AttackType {
   ARP_SPOOFING = 'ARP_SPOOFING',

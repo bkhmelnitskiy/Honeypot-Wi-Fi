@@ -7,9 +7,9 @@ import {
   JoinColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity.js';
-import { Network } from '../../networks/entities/network.entity.js';
-import { Attack } from './attack.entity.js';
+import { User } from '../../users/entities/user.entity';
+import { Network } from '../../networks/entities/network.entity';
+import { Attack } from './attack.entity';
 
 @Entity('scans')
 export class Scan {
