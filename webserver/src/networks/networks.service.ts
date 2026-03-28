@@ -5,6 +5,7 @@ import { Network } from './entities/network.entity';
 import { Scan } from '../scans/entities/scan.entity';
 import { Attack } from '../scans/entities/attack.entity';
 import { QueryNetworksDto } from './dto/query-networks.dto';
+import { encodeCursor, decodeCursor, flipOrder } from '../common/utils/cursor';
 
 const SORT_CONFIG: Record<string, { alias: string; expr: string; aggregated: boolean }> = {
   safety_score: { alias: 'avg_safety_score', expr: 'AVG(scan.safety_score)', aggregated: true },
@@ -12,22 +13,6 @@ const SORT_CONFIG: Record<string, { alias: string; expr: string; aggregated: boo
   last_scanned_at: { alias: 'last_scanned_at', expr: 'MAX(scan.started_at)', aggregated: true },
   ssid: { alias: 'ssid', expr: 'network.ssid', aggregated: false },
 };
-
-function encodeCursor(data: object): string {
-  return Buffer.from(JSON.stringify(data)).toString('base64');
-}
-
-function decodeCursor(raw: string): { id?: string; dir?: string } | null {
-  try {
-    return JSON.parse(Buffer.from(raw, 'base64').toString('utf8'));
-  } catch {
-    return null;
-  }
-}
-
-function flipOrder(order: 'ASC' | 'DESC'): 'ASC' | 'DESC' {
-  return order === 'DESC' ? 'ASC' : 'DESC';
-}
 
 @Injectable()
 export class NetworksService {
