@@ -295,8 +295,9 @@ Przeglądanie i wyszukiwanie sieci. Wymagane uwierzytelnienie.
 
 ```
 Query params:
-  ?search=FreeWiFi          -- wyszukiwanie po SSID
-  &sort=safety_score        -- sortowanie
+  ?search=FreeWiFi          -- wyszukiwanie po SSID (ILIKE, częściowe dopasowanie)
+  &bssid=AA:BB:CC:DD:EE:FF  -- wyszukiwanie po BSSID (dokładne dopasowanie, case-insensitive)
+  &sort=safety_score        -- sortowanie (safety_score | total_scans | last_scanned_at | ssid)
   &order=asc                -- rosnąco/malejąco
   &cursor=eyJpZCI6MTIzfQ    -- kursor do paginacji (base64 encoded)
   &per_page=20              -- wyników na stronę (max 100)
