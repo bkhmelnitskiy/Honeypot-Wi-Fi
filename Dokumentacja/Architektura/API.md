@@ -53,7 +53,7 @@ X-RateLimit-Reset: 1710600000
 |---|---|
 | `POST /auth/login` | 5 req/min per IP |
 | `POST /auth/register` | 3 req/min per IP |
-| `POST /scans`, `POST /sync/batch` | 30 req/min per user |
+| `POST /sync`, `POST /sync/batch` | 30 req/min per user |
 | Pozostałe endpointy | 100 req/min per user |
 
 Przekroczenie limitu zwraca:
@@ -219,72 +219,6 @@ Błędy:
 ---
 
 ### 1.3 Skany
-
-#### POST /scans
-Wysłanie wyniku skanu na serwer. Wymaga uwierzytelnienia.
-
-```
-Request:
-{
-  "client_scan_id": "uuid",
-  "network": {
-    "ssid": "FreeWiFi",
-    "bssid": "AA:BB:CC:DD:EE:FF",
-    "channel": 6,
-    "encryption_type": "OPEN",
-    "frequency_mhz": 2437,
-    "gps_latitude": 50.0647,
-    "gps_longitude": 19.9450
-  },
-  "safety_score": 67.9,
-  "scan_duration_sec": 120,
-  "scan_config": {
-    "modules": ["ALL"],
-    "duration": 120
-  },
-  "attacks": [
-    {
-      "attack_type": "ARP_SPOOFING",
-      "severity": "HIGH",
-      "confidence": 0.87,
-      "detected_at": "2026-03-19T10:29:15Z",
-      "details": {
-        "attacker_mac": "XX:XX:XX:XX:XX:XX",
-        "target_ip": "192.168.1.1",
-        "spoofed_packets_count": 142
-      }
-    }
-  ],
-  "device_hardware_id": "rpi-serial",
-  "firmware_version": "1.2.0",
-  "started_at": "2026-03-19T10:28:00Z",
-  "completed_at": "2026-03-19T10:30:00Z",
-  "payload_hash": "a1b2c3d4e5f6..."
-}
-
-payload_hash: hex-encoded SHA-256 obliczony z JSON-serializacji pól w kolejności jak powyżej:
-(client_scan_id +
-network +
-safety_score +
-scan_duration_sec + scan_config +
-attacks + device_hardware_id +
-firmware_version +
-started_at +
-completed_at),
-kodowanie UTF-8, bez białych znaków.
-
-Response 201:
-{
-  "server_scan_id": "uuid",
-  "network_id": "uuid",
-  "accepted": true
-}
-
-Błędy:
-  409 - duplikat (client_scan_id już istnieje na serwerze)
-  422 - walidacja lub integralność danych (hash nie pasuje)
-  401 - brak autoryzacji
-```
 
 #### Schemat obiektu ataku
 
@@ -526,6 +460,72 @@ Jeśli has_more == true, klient powinien wykonać kolejne zapytanie
 z since=next_since aby pobrać pozostałe aktualizacje.
 
 Używane przez Sync Engine do odświeżenia lokalnego cache community.
+```
+
+#### POST /sync
+Wysłanie pojedynczego skanu na serwer. Wymaga uwierzytelnienia.
+
+```
+Request:
+{
+  "client_scan_id": "uuid",
+  "network": {
+    "ssid": "FreeWiFi",
+    "bssid": "AA:BB:CC:DD:EE:FF",
+    "channel": 6,
+    "encryption_type": "OPEN",
+    "frequency_mhz": 2437,
+    "gps_latitude": 50.0647,
+    "gps_longitude": 19.9450
+  },
+  "safety_score": 67.9,
+  "scan_duration_sec": 120,
+  "scan_config": {
+    "modules": ["ALL"],
+    "duration": 120
+  },
+  "attacks": [
+    {
+      "attack_type": "ARP_SPOOFING",
+      "severity": "HIGH",
+      "confidence": 0.87,
+      "detected_at": "2026-03-19T10:29:15Z",
+      "details": {
+        "attacker_mac": "XX:XX:XX:XX:XX:XX",
+        "target_ip": "192.168.1.1",
+        "spoofed_packets_count": 142
+      }
+    }
+  ],
+  "device_hardware_id": "rpi-serial",
+  "firmware_version": "1.2.0",
+  "started_at": "2026-03-19T10:28:00Z",
+  "completed_at": "2026-03-19T10:30:00Z",
+  "payload_hash": "a1b2c3d4e5f6..."
+}
+
+payload_hash: hex-encoded SHA-256 obliczony z JSON-serializacji pól w kolejności jak powyżej:
+(client_scan_id +
+network +
+safety_score +
+scan_duration_sec + scan_config +
+attacks + device_hardware_id +
+firmware_version +
+started_at +
+completed_at),
+kodowanie UTF-8, bez białych znaków.
+
+Response 201:
+{
+  "server_scan_id": "uuid",
+  "network_id": "uuid",
+  "accepted": true
+}
+
+Błędy:
+  409 - duplikat (client_scan_id już istnieje na serwerze)
+  422 - walidacja lub integralność danych (hash nie pasuje)
+  401 - brak autoryzacji
 ```
 
 #### POST /sync/batch
