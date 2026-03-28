@@ -6,8 +6,8 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Scan } from '../../scans/entities/scan.entity.js';
-import { RefreshToken } from '../../auth/entities/refresh-token.entity.js';
+import { Scan } from '../../scans/entities/scan.entity';
+import { RefreshToken } from '../../auth/entities/refresh-token.entity';
 
 @Entity('users')
 export class User {
