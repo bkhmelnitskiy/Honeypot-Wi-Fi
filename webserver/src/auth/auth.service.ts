@@ -7,10 +7,8 @@ import { User } from '../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { ref } from 'process';
 import {createHash} from 'crypto';  
 import { RefreshToken } from './entities/refresh-token.entity';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Injectable()
 export class AuthService {

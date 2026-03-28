@@ -7,7 +7,7 @@ import { Attack } from 'src/scans/entities/attack.entity';
 import { Network } from 'src/networks/entities/network.entity';
 import { ScanUploadDto } from './dto/scan-upload.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class SyncService {

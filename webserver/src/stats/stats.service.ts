@@ -156,7 +156,7 @@ export class StatsService {
       .addSelect('AVG(attack.confidence)', 'avg_confidence')
       .groupBy('attack.attack_type');
 
-    // Severity distribution (same filters)
+    // Severity distribution
     const sevQb = this.attacksRepository.createQueryBuilder('attack');
     if (network_id) sevQb.innerJoin('attack.scan', 'scan');
     if (type) sevQb.andWhere('attack.attack_type = :type', { type });
@@ -168,7 +168,7 @@ export class StatsService {
       .addSelect('COUNT(*)', 'count')
       .groupBy('attack.severity');
 
-    // Weekly trend (same filters)
+    // Weekly trend 
     const trendQb = this.attacksRepository.createQueryBuilder('attack');
     if (network_id) trendQb.innerJoin('attack.scan', 'scan');
     if (type) trendQb.andWhere('attack.attack_type = :type', { type });
@@ -187,19 +187,19 @@ export class StatsService {
       trendQb.getRawMany(),
     ]);
 
-    // If filtering by type, return single object; otherwise aggregate all
+    // If filtering by type, return single object
     const totalDetections = mainRows.reduce((sum, r) => sum + parseInt(r.total_detections, 10), 0);
     const avgConfidence = mainRows.length > 0
       ? parseFloat((mainRows.reduce((sum, r) => sum + parseFloat(r.avg_confidence), 0) / mainRows.length).toFixed(2))
       : null;
 
-    // severity_distribution: object { "LOW": 412, ... }
+    // severity_distribution
     const severityDistribution: Record<string, number> = {};
     for (const row of sevRows) {
       severityDistribution[row.severity] = parseInt(row.count, 10);
     }
 
-    // trend: array of { week, count }
+    // trend
     const trend = trendRows.map((row) => ({
       week: row.week,
       count: parseInt(row.count, 10),
