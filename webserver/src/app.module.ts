@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -16,8 +16,14 @@ import { SyncModule } from './sync/sync.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync(databaseConfig),
-    ThrottlerModule.forRoot({
-      throttlers: [{ ttl: 60000, limit: 100 }],
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [{
+          ttl: config.get<number>('THROTTLE_TTL', 60000),
+          limit: config.get<number>('THROTTLE_LIMIT', 100),
+        }],
+      }),
     }),
     AuthModule,
     UsersModule,
