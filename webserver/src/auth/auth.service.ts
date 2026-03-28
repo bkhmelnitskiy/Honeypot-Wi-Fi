@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -59,11 +59,11 @@ export class AuthService {
     
     const user = await this.usersRepository.findOne({ where: { email: dto.email } });
     if (!user) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedException('Invalid email or password');
     }
     const isMatch = bcrypt.compareSync(dto.password, user.password_hash);
     if (!isMatch) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedException('Invalid email or password');
     } 
     
     let tokens = this.generateJwtTokens(user);
@@ -77,7 +77,7 @@ export class AuthService {
     const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
     const tokenEntity = await this.refreshTokensRepository.findOne({ where: { token_hash: tokenHash }, relations: ['user'] });
     if (!tokenEntity || tokenEntity.revoked || tokenEntity.expires_at < new Date()) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
     
     
@@ -94,7 +94,7 @@ export class AuthService {
     const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
     const tokenEntity = await this.refreshTokensRepository.findOne({ where: { token_hash: tokenHash }, relations: ['user'] });
     if (!tokenEntity || tokenEntity.revoked || tokenEntity.expires_at < new Date()) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
     tokenEntity.revoked = true;
     await this.refreshTokensRepository.save(tokenEntity);
