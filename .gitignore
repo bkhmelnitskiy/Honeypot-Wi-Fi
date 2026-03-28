@@ -2,3 +2,4 @@
 /webserver/node_modules/*
 /webserver/.env
 random/*
+.idea*
