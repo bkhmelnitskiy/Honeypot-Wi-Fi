@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Param,
+  ParseUUIDPipe,
   Body,
   Query,
   UseGuards,
@@ -29,7 +30,7 @@ export class ScansController {
   @Get(':id')
   async findOne(
     @CurrentUser() user: { user_id: string },
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.scansService.findOne(user.user_id, id);
   }
