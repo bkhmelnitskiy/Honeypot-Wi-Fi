@@ -1,0 +1,51 @@
+name: Deploy Webserver to EC2
+ 
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'webserver/**'
+ 
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/app
+ 
+            # Utwórz/nadpisz plik .env
+            cat > ./webserver/.env << EOF
+            PORT=3000
+            NODE_ENV=production
+ 
+            DB_HOST=postgres
+            DB_PORT=5432
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_DATABASE=${{ secrets.DB_DATABASE }}
+ 
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_ACCESS_EXPIRATION=3600
+            JWT_REFRESH_EXPIRATION=2592000
+ 
+            THROTTLE_TTL=60000
+            THROTTLE_LIMIT=100
+ 
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            EOF
+ 
+            # Pobierz najnowsze zmiany
+            git pull origin main
+ 
+            # Zbuduj i zrestartuj kontenery
+            cd webserver
+            docker compose down
+            docker compose up -d --build
