@@ -39,7 +39,7 @@ jobs:
             cd ~/app
 
             cat > ./webserver/.env << EOF
-            PORT=3000
+            PORT=80
             NODE_ENV=production
 
             DB_HOST=postgres
