@@ -1,10 +1,43 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { databaseConfig } from './common/config/database.config';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { ScansModule } from './scans/scans.module';
+import { NetworksModule } from './networks/networks.module';
+import { StatsModule } from './stats/stats.module';
+import { SyncModule } from './sync/sync.module';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync(databaseConfig),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [{
+          ttl: config.get<number>('THROTTLE_TTL', 60000),
+          limit: config.get<number>('THROTTLE_LIMIT', 100),
+        }],
+      }),
+    }),
+    AuthModule,
+    UsersModule,
+    ScansModule,
+    NetworksModule,
+    StatsModule,
+    SyncModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
