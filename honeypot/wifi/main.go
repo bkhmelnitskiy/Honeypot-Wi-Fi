@@ -19,12 +19,17 @@ func run() error {
 	r := chi.NewRouter()
 	r.Route("/interface", func(r chi.Router) {
 		r.Get("/", h.GetInterfaces)
-		r.Route("/{interface}", func(r chi.Router) {
+		r.Route("/{interface-id}", func(r chi.Router) {
 			r.Get("/", h.GetInterface)
 			r.Get("/scan", h.ScanInterface)
+			r.Route("/network", func(r chi.Router) {
+				r.Get("/", h.CurrentNetwork)
+				r.Post("/", h.ConnectNetwork)
+				r.Delete("/", h.DisconnectNetwork)
+			})
 			r.Route("/bss", func(r chi.Router) {
-				r.Get("/", h.GetInterfaceBSSs)
-				r.Get("/{bss}", h.GetInterfaceBSS)
+				r.Get("/", h.GetBSSs)
+				r.Get("/{bss-id}", h.GetBSS)
 			})
 		})
 	})
