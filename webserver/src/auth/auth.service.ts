@@ -1,14 +1,15 @@
-import { Injectable, Inject, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import {createHash} from 'crypto';  
+import {createHash} from 'crypto';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { RegisterResponseDto, LoginResponseDto, TokensResponseDto } from './dto/auth-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -17,46 +18,38 @@ export class AuthService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     @InjectRepository(RefreshToken)
-    private refreshTokensRepository: Repository<RefreshToken>,  
-    private dataSource: DataSource,
+    private refreshTokensRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
     private configService: ConfigService    
   ){}
 
-  async register(dto: RegisterDto) {
-
+  async register(dto: RegisterDto): Promise<RegisterResponseDto> {
     const passwordHash = await bcrypt.hash(dto.password, 10);
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction(); 
 
     let user: User;
     try {
-      user = queryRunner.manager.create(User, {
+      user = this.usersRepository.create({
         email: dto.email,
         password_hash: passwordHash,
         display_name: dto.display_name,
       });
-      await queryRunner.manager.save(user);
-      await queryRunner.commitTransaction();
+      await this.usersRepository.save(user);
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
       if (error.code === '23505') {
         throw new ConflictException('Email already registered');
       }
       throw error;
-    } finally {
-      await queryRunner.release();  
     }
 
-    return { user_id: user.user_id,
-             email: user.email,
-             display_name: user.display_name,
-             created_at: user.created_at };  
+    return {
+      user_id: user.user_id,
+      email: user.email,
+      display_name: user.display_name,
+      created_at: user.created_at,
+    };
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto): Promise<LoginResponseDto> {
     
     const user = await this.usersRepository
       .createQueryBuilder('user')
@@ -72,12 +65,14 @@ export class AuthService {
     } 
     
     const tokens = await this.generateJwtTokens(user);
-    tokens['user_id'] = user.user_id;
-    tokens['display_name'] = user.display_name;
-    return tokens;
+    return {
+      ...tokens,
+      user_id: user.user_id,
+      display_name: user.display_name,
+    };
   }
 
-  async refresh(refreshToken: string) {
+  async refresh(refreshToken: string): Promise<TokensResponseDto> {
    
     const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
     const tokenEntity = await this.refreshTokensRepository.findOne({ where: { token_hash: tokenHash }, relations: ['user'] });
@@ -108,7 +103,7 @@ export class AuthService {
   }
 
 
-  private async generateJwtTokens(user: User){
+  private async generateJwtTokens(user: User): Promise<TokensResponseDto> {
 
       let refreshTime:number = Number(this.configService.get('JWT_REFRESH_EXPIRATION')) || 2592000; // default 30 days
       let accessTime:number = Number(this.configService.get('JWT_ACCESS_EXPIRATION')) || 3600; // default 1 hour
