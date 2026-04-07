@@ -3,9 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Scan } from 'src/scans/entities/scan.entity';
-import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
+import { Scan } from '../scans/entities/scan.entity';
+import { RefreshToken } from '../auth/entities/refresh-token.entity';
 import * as bcrypt from 'bcrypt';
+import { ProfileResponseDto, UpdateProfileResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -21,7 +22,7 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { user_id: userId } });
   }
 
-  async getProfile(userId: string) {
+  async getProfile(userId: string): Promise<ProfileResponseDto> {
     const user = await this.usersRepository.findOne({ where: { user_id: userId } });
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -40,7 +41,7 @@ export class UsersService {
     }
   }
 
-  async updateProfile(userId: string, dto: UpdateUserDto) {
+  async updateProfile(userId: string, dto: UpdateUserDto): Promise<UpdateProfileResponseDto> {
 
     let user = await this.usersRepository
       .createQueryBuilder('user')
@@ -51,14 +52,16 @@ export class UsersService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
+
+    let hasChanges = false;
+
     if (dto.display_name) {
       user.display_name = dto.display_name;
-      user.updated_at = new Date(); 
-      user = await this.usersRepository.save(user);
+      hasChanges = true;
     }
 
-    if(dto.new_password){
-      if(!dto.current_password){
+    if (dto.new_password) {
+      if (!dto.current_password) {
         throw new BadRequestException('Current password is required to set a new password');
       }
 
@@ -66,16 +69,19 @@ export class UsersService {
       if (!isMatch) {
         throw new UnauthorizedException('Invalid password');
       }
-      user.password_hash = await bcrypt.hash(dto.new_password, 10); 
-      user.updated_at = new Date();
+      user.password_hash = await bcrypt.hash(dto.new_password, 10);
+      hasChanges = true;
+    }
+
+    if (hasChanges) {
       user = await this.usersRepository.save(user);
     }
 
     return {
-      user_id: user.user_id,  
+      user_id: user.user_id,
       email: user.email,
       display_name: user.display_name,
-      updated_at: user.updated_at.toISOString()
+      updated_at: user.updated_at.toISOString(),
     };
   }
 
