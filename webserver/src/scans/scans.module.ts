@@ -5,7 +5,7 @@ import { ScansService } from './scans.service';
 import { Scan } from './entities/scan.entity';
 import { Attack } from './entities/attack.entity';
 import { Network } from '../networks/entities/network.entity';
-import { NetworksModule } from 'src/networks/networks.module';
+import { NetworksModule } from '../networks/networks.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Scan, Attack, Network]), NetworksModule],
