@@ -9,13 +9,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
-import { CurrentUser } from '../common/decorators/current-user.decorator.js';
-import { SyncService } from './sync.service.js';
-import { SyncStatusQueryDto } from './dto/sync-status-query.dto.js';
-import { BatchUploadDto } from './dto/batch-upload.dto.js';
-import { ScanUploadDto } from './dto/scan-upload.dto.js';
-import { Scan } from 'src/scans/entities/scan.entity.js';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { SyncService } from './sync.service';
+import { SyncStatusQueryDto } from './dto/sync-status-query.dto';
+import { BatchUploadDto } from './dto/batch-upload.dto';
+import { ScanUploadDto } from './dto/scan-upload.dto';
 
 @Controller('sync')
 @UseGuards(JwtAuthGuard)

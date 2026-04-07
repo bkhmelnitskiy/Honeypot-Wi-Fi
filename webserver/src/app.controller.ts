@@ -20,7 +20,6 @@ export class AppController {
           'DELETE /api/v1/users/me': 'Delete account',
         },
         scans: {
-          'POST /api/v1/scans': 'Upload a scan',
           'GET /api/v1/scans': 'List scans (paginated)',
           'GET /api/v1/scans/:id': 'Get scan details',
         },
@@ -33,6 +32,7 @@ export class AppController {
           'GET /api/v1/stats/attacks': 'Attack type statistics',
         },
         sync: {
+          'POST /api/v1/sync': 'Upload a scan',
           'GET /api/v1/sync/status': 'Get sync status (incremental)',
           'POST /api/v1/sync/batch': 'Batch upload scans',
         },
