@@ -5,6 +5,7 @@ import { Network } from './entities/network.entity';
 import { QueryNetworksDto } from './dto/query-networks.dto';
 import { encodeCursor, decodeCursor, flipOrder } from '../common/utils/cursor';
 import { NetworksQueryRepository, SORT_CONFIG } from './networks-query.repository';
+import { NetworkListResponseDto, NetworkDetailResponseDto } from './dto/network-response.dto';
 
 @Injectable()
 export class NetworksService {
@@ -14,7 +15,7 @@ export class NetworksService {
     private readonly queryRepo: NetworksQueryRepository,
   ) {}
 
-  async findAll(query: QueryNetworksDto) {
+  async findAll(query: QueryNetworksDto): Promise<NetworkListResponseDto> {
     const perPage = query.per_page ?? 20;
     const sortField = query.sort ?? 'last_scanned_at';
     const sortOrder: 'ASC' | 'DESC' = query.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
@@ -113,10 +114,10 @@ export class NetworksService {
       if (isReversed ? hasMore : !!query.cursor) prevCursor = encodeCursor({ id: rows[0].id, dir: 'prev' });
     }
 
-    return { networks, total, next_cursor: nextCursor, prev_cursor: prevCursor };
+    return { networks, total, next_cursor: nextCursor, prev_cursor: prevCursor, per_page: perPage };
   }
 
-  async findOne(networkId: string) {
+  async findOne(networkId: string): Promise<NetworkDetailResponseDto> {
     const network = await this.networksRepository.findOne({ where: { id: networkId } });
     if (!network) {
       throw new NotFoundException('Network not found');
@@ -144,6 +145,8 @@ export class NetworksService {
       bssid: network.bssid,
       channel: network.channel,
       encryption_type: network.encryption_type,
+      gps_latitude: network.gps_latitude ?? null,
+      gps_longitude: network.gps_longitude ?? null,
       avg_safety_score: stats.avg_safety_score ? parseFloat(parseFloat(stats.avg_safety_score).toFixed(1)) : null,
       min_safety_score: stats.min_safety_score ? parseFloat(stats.min_safety_score) : null,
       max_safety_score: stats.max_safety_score ? parseFloat(stats.max_safety_score) : null,
