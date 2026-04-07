@@ -64,8 +64,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     } 
     
-    let tokens = this.generateJwtTokens(user);
-    tokens['user_id'] = user.user_id; 
+    const tokens = await this.generateJwtTokens(user);
+    tokens['user_id'] = user.user_id;
     tokens['display_name'] = user.display_name;
     return tokens;
   }
@@ -80,8 +80,8 @@ export class AuthService {
     
     
     const user = tokenEntity.user;
-    let tokens = this.generateJwtTokens(user);
-    
+    const tokens = await this.generateJwtTokens(user);
+
     tokenEntity.revoked = true; 
     await this.refreshTokensRepository.save(tokenEntity);
 
@@ -101,14 +101,14 @@ export class AuthService {
   }
 
 
-  private generateJwtTokens(user: User){
+  private async generateJwtTokens(user: User){
 
       let refreshTime:number = Number(this.configService.get('JWT_REFRESH_EXPIRATION')) || 2592000; // default 30 days
       let accessTime:number = Number(this.configService.get('JWT_ACCESS_EXPIRATION')) || 3600; // default 1 hour
 
       const payload = { sub: user.user_id, email: user.email };
 
-      const accessToken = this.jwtService.sign(payload, { 
+      const accessToken = this.jwtService.sign(payload, {
         expiresIn: accessTime
       });
 
@@ -117,19 +117,19 @@ export class AuthService {
         expiresIn: refreshTime
       })
 
-      
+
       const refreshTokenEntity = this.refreshTokensRepository.create({
-        token_hash: createHash('sha256').update(refreshToken).digest('hex'),  
+        token_hash: createHash('sha256').update(refreshToken).digest('hex'),
         expires_at: new Date(Date.now() + refreshTime  * 1000),
         user_id: user.user_id,
       });
-      this.refreshTokensRepository.save(refreshTokenEntity);
-      
+      await this.refreshTokensRepository.save(refreshTokenEntity);
+
       return {
         access_token: accessToken,
         refresh_token: refreshToken,
         expires_in: accessTime,
-        refresh_expires_in: refreshTime 
+        refresh_expires_in: refreshTime
       }
   }
 }

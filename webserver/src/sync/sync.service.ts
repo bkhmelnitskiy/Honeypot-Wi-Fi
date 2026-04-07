@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotImplementedException } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { SyncStatusQueryDto } from './dto/sync-status-query.dto';
 import { BatchUploadDto } from './dto/batch-upload.dto';
@@ -22,26 +22,11 @@ export class SyncService {
   ) {}
 
   async getStatus(userId: string, query: SyncStatusQueryDto) {
-    // TODO: implement incremental sync - return updated networks since last sync
-    return {
-      updated_networks: [],
-      global_stats: {},
-      has_more: false,
-      next_since: null,
-      server_time: new Date().toISOString(),
-    };
+    throw new NotImplementedException('Sync status not yet implemented');
   }
 
   async batchUpload(userId: string, dto: BatchUploadDto) {
-    // TODO: implement batch scan upload with per-scan validation
-    return {
-      results: dto.scans.map((scan) => ({
-        client_scan_id: scan.client_scan_id,
-        status: 'CREATED',
-        server_scan_id: '',
-        error: null,
-      })),
-    };
+    throw new NotImplementedException('Batch upload not yet implemented');
   }
 
 
