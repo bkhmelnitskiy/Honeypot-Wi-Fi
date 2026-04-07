@@ -11,7 +11,7 @@ import {
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AttackType, Severity } from '../../scans/entities/attack.entity.js';
+import { AttackType, Severity } from '../../scans/entities/attack.entity';
 
 class NetworkDto {
   @IsString()
