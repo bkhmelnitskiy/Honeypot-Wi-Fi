@@ -1,4 +1,4 @@
-import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,7 +25,7 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
 
-    const passwordHash = bcrypt.hashSync(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password, 10);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -40,8 +40,11 @@ export class AuthService {
       });
       await queryRunner.manager.save(user);
       await queryRunner.commitTransaction();
-    } catch (error) {
+    } catch (error: any) {
       await queryRunner.rollbackTransaction();
+      if (error.code === '23505') {
+        throw new ConflictException('Email already registered');
+      }
       throw error;
     } finally {
       await queryRunner.release();  
@@ -55,11 +58,15 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     
-    const user = await this.usersRepository.findOne({ where: { email: dto.email } });
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password_hash')
+      .where('user.email = :email', { email: dto.email })
+      .getOne();
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    const isMatch = bcrypt.compareSync(dto.password, user.password_hash);
+    const isMatch = await bcrypt.compare(dto.password, user.password_hash);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid email or password');
     } 

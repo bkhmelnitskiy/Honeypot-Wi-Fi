@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Scan } from 'src/scans/entities/scan.entity';
@@ -14,8 +14,7 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(Scan)
     private readonly scansRepository: Repository<Scan>,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokensRepository: Repository<RefreshToken>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findById(userId: string): Promise<User | null> {
@@ -43,7 +42,11 @@ export class UsersService {
 
   async updateProfile(userId: string, dto: UpdateUserDto) {
 
-    let user = await this.usersRepository.findOne({ where: { user_id: userId } });
+    let user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password_hash')
+      .where('user.user_id = :userId', { userId })
+      .getOne();
 
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -59,11 +62,11 @@ export class UsersService {
         throw new BadRequestException('Current password is required to set a new password');
       }
 
-      const isMatch = bcrypt.compareSync(dto.current_password, user.password_hash);
+      const isMatch = await bcrypt.compare(dto.current_password, user.password_hash);
       if (!isMatch) {
-        throw new BadRequestException('Invalid password');
-      } 
-      user.password_hash = bcrypt.hashSync(dto.new_password, 10); 
+        throw new UnauthorizedException('Invalid password');
+      }
+      user.password_hash = await bcrypt.hash(dto.new_password, 10); 
       user.updated_at = new Date();
       user = await this.usersRepository.save(user);
     }
@@ -78,19 +81,24 @@ export class UsersService {
 
   async deleteAccount(userId: string, password: string) {
 
-    let user = await this.usersRepository.findOne({ where: { user_id: userId } });    
+    let user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password_hash')
+      .where('user.user_id = :userId', { userId })
+      .getOne();
 
     if (!user){
       throw new BadRequestException('User not found');
     }
-    const isMatch = bcrypt.compareSync(password, user.password_hash);
+    const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      throw new BadRequestException('Invalid password');
+      throw new UnauthorizedException('Invalid password');
     }
 
-    await this.refreshTokensRepository.delete({ user_id: userId });
-    await this.usersRepository.remove(user);
-    return;
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete(RefreshToken, { user_id: userId });
+      await manager.remove(user);
+    });
   }
 
   private getUserScansCount(userId: string){
