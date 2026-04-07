@@ -102,7 +102,7 @@ export class UsersService {
       .where('scan.user_id = :userId', { userId })
       .select('COUNT(DISTINCT scan.network_id)', 'count')
       .getRawOne()
-      .then(result => parseInt(result.count, 10));
+      .then(result => result ? parseInt(result.count, 10) : 0);
   }
 
 }
