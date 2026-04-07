@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Scan } from './entities/scan.entity';
 import { QueryScansDto } from './dto/query-scans.dto';
 import { NetworksService } from '../networks/networks.service';
 import { encodeCursor, decodeCursor } from '../common/utils/cursor';
+import { ScanListResponseDto, ScanDetailResponseDto } from './dto/scan-response.dto';
 
 @Injectable()
 export class ScansService {
@@ -14,7 +15,7 @@ export class ScansService {
     private readonly networksService: NetworksService,
   ) {}
 
-  async findAll(userId: string, query: QueryScansDto) {
+  async findAll(userId: string, query: QueryScansDto): Promise<ScanListResponseDto> {
     const perPage = query.per_page ?? 20;
 
     const qb = this.scansRepository
@@ -102,14 +103,17 @@ export class ScansService {
     return { scans, total, next_cursor: nextCursor, prev_cursor: prevCursor, per_page: perPage };
   }
 
-  async findOne(userId: string, scanId: string) {
+  async findOne(userId: string, scanId: string): Promise<ScanDetailResponseDto> {
     const scan = await this.scansRepository.findOne({
-      where: { server_scan_id: scanId, user_id: userId },
+      where: { server_scan_id: scanId },
       relations: ['attacks', 'network'],
     });
 
     if (!scan) {
       throw new NotFoundException('Scan not found');
+    }
+    if (scan.user_id !== userId) {
+      throw new ForbiddenException('You do not have access to this scan');
     }
 
     const net = await this.networksService.findOne(scan.network.id);
