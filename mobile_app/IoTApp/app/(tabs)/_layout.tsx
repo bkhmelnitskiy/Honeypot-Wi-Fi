@@ -1,12 +1,14 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { initDB } from '@/constants/db';
 import { Ionicons } from '@expo/vector-icons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
+import React from 'react';
 import { Pressable } from 'react-native';
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -18,6 +20,10 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+
+  React.useEffect(() => {
+    initDB();
+  }, []);
 
   return (
     <Tabs
@@ -49,12 +55,37 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+          name="scan_screen"
+          options={{
+              title: 'Scan',
+              tabBarIcon: ({color, size}) => <Ionicons name="wifi" size={size} color={color} />,
+              }}
+          />
+
+      <Tabs.Screen
+        name="My_networks"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+            title: 'My Scans',
+            tabBarIcon: ({color, size}) => <Ionicons name="eye" size={size} color={color} />,
+            }}
+        />
+
+      <Tabs.Screen
+          name="Community"
+          options={{
+              title: 'Community',
+              tabBarIcon: ({color, size}) => <Ionicons name="person" size={size} color={color} />,
+              }}
+        />
+
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
         }}
       />
+
     </Tabs>
   );
 }

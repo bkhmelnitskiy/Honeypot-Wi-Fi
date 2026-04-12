@@ -1,9 +1,9 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
-export default function SettingsScreen() {
+export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Tu beda swietne ustawieniaaaaa</Text>
+      <Text style={styles.text}>tab one</Text>
     </View>
   );
 }
