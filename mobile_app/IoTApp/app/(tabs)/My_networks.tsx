@@ -1,6 +1,7 @@
 import { addItem, deleteItem, getItems } from '@/constants/db';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Button, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 type Scan = {
   id: number;
@@ -10,6 +11,7 @@ type Scan = {
 };
 
 export default function MyNetworksScreen() {
+  const router = useRouter();
   const [networkName, setNetworkName] = useState('');
   const [scans, setScans] = useState<Scan[]>(() => getItems() as Scan[]);
 
@@ -43,10 +45,13 @@ export default function MyNetworksScreen() {
         data={scans}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => router.push(`/network_details?id=${item.id}`)}
+          >
             <Text style={styles.rowText}>{item.network ?? '(unnamed)'}</Text>
             <Button title="Delete" color="red" onPress={() => handleDelete(item.id)} />
-          </View>
+          </TouchableOpacity>
         )}
         ListEmptyComponent={<Text style={styles.empty}>No networks yet.</Text>}
       />

@@ -13,7 +13,7 @@ export function initDB() {
             scan_duration_sec INTEGER,
             attacks TEXT,
             device_hardware_id TEXT,
-            firmare_version TEXT,
+            firmware_version TEXT,
             started_at TEXT,
             completed_at TEXT
         );      
@@ -32,6 +32,12 @@ export function addItem(name: string) {
 
 export function deleteItem(id: number) {
     return db.runSync('DELETE FROM scans WHERE id = ?', [id]);
+}
+
+export function getItemById(id: number) {
+    return db.getFirstSync<{ id: number, server_scan_id: string, client_scan_id: string, network: string, safety_score: number, scan_duration_sec: number, attacks: string, device_hardware_id: string, firmare_version: string, started_at: string, completed_at: string }>(
+        'SELECT * FROM scans WHERE id = ?', [id]
+    );
 }
 
 export default db;
