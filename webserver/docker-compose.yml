@@ -17,8 +17,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    ports:
-      - '5432:5432'
+    expose:
+      - '5432'
     environment:
       POSTGRES_USER: ${DB_USERNAME:-honeypot}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-honeypot}
