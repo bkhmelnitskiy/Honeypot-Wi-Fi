@@ -22,7 +22,17 @@ jobs:
           script: |
             set -e
 
-            cd ~/app
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            APP_DIR="$HOME/app"
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              mkdir -p "$APP_DIR"
+              git clone "$REPO_URL" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+            git fetch origin main
+            git reset --hard origin/main
 
             cat > ./webserver/.env << EOF
             PORT=80
@@ -44,7 +54,6 @@ jobs:
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             EOF
 
-            git pull origin main
             cd webserver
             docker compose build
             docker compose down
