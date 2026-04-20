@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Query,
+  Param,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { SyncService } from './sync.service';
 import { SyncStatusQueryDto } from './dto/sync-status-query.dto';
+import { SyncUpdatesQueryDto } from './dto/sync-updates-query.dto';
 import { BatchUploadDto } from './dto/batch-upload.dto';
 import { ScanUploadDto } from './dto/scan-upload.dto';
 
@@ -27,6 +29,15 @@ export class SyncController {
     @Query() query: SyncStatusQueryDto,
   ) {
     return this.syncService.getStatus(user.user_id, query);
+  }
+
+  @Get(':since')
+  async getUpdates(
+    @CurrentUser() user: { user_id: string },
+    @Param('since') since: string,
+    @Query() query: SyncUpdatesQueryDto,
+  ) {
+    return this.syncService.getUpdates(user.user_id, since, query);
   }
 
   @Post('batch')

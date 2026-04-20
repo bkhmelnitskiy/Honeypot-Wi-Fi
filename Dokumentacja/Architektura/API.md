@@ -436,20 +436,38 @@ Response 200:
 ### 1.6 Synchronizacja
 
 #### GET /sync/status
-Pobieranie aktualizacji od ostatniej synchronizacji. Wymaga uwierzytelnienia.
-**PYTANIE: jakie dane synchronizujemy opcja 1. synchronizacja wszystkich informacji o sieciach które są najbliżej; 2. synchronizacja okrojonych dany np. tylko score z wszystkich sieci 3. opcja wszystko (nie polecam xD)** 
+Sprawdzenie liczby rekordów zaktualizowanych od podanego timestampu. Wymaga uwierzytelnienia.
+Lekki endpoint - klient używa go aby zdecydować czy warto wykonać pełny sync.
 
 ```
 Query params:
   ?since=2026-03-10T00:00:00Z  -- timestamp ostatniej sync
-  &limit=100                   -- max liczba zaktualizowanych sieci (domyślnie 100, max 500)
+
+Response 200:
+{
+  "updated_count": 142,
+  "server_time": "2026-03-19T10:00:00Z"
+}
+```
+
+#### GET /sync/:since
+Pobieranie zaktualizowanych sieci od podanego timestampu. Wymaga uwierzytelnienia.
+**PYTANIE: jakie dane synchronizujemy opcja 1. synchronizacja wszystkich informacji o sieciach które są najbliżej; 2. synchronizacja okrojonych dany np. tylko score z wszystkich sieci 3. opcja wszystko (nie polecam xD)**
+
+```
+Path params:
+  :since                       -- timestamp ostatniej sync (ISO 8601)
+
+Query params:
+  ?limit=100                   -- max liczba zaktualizowanych sieci (domyślnie 100, max 500)
+                                  jeśli limit > 500, serwer zwraca max 500
 
 Response 200:
 {
   "updated_networks": [
     { Obiekty sieci }
   ],
-  "global_stats":{
+  "global_stats": {
 
   },
   "has_more": true,
