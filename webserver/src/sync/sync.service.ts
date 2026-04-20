@@ -1,14 +1,25 @@
-import { BadRequestException, ConflictException, Injectable, NotImplementedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { SyncStatusQueryDto } from './dto/sync-status-query.dto';
 import { BatchUploadDto } from './dto/batch-upload.dto';
 import { Scan } from '../scans/entities/scan.entity';
 import { Attack } from '../scans/entities/attack.entity';
 import { Network } from '../networks/entities/network.entity';
+import { SyncStatusResponseDto } from './dto/sync-status-response.dto';
 import { ScanUploadDto } from './dto/scan-upload.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { UploadScanResponseDto } from './dto/sync-response.dto';
+import { SyncUpdatesQueryDto } from './dto/sync-updates-query.dto';
+import { SyncUpdatesResponseDto } from './dto/sync-updates-response.dto';
+import {
+  BatchUploadResponseDto,
+  BatchUploadResultDto,
+} from './dto/batch-upload-response.dto';
+
+const DEFAULT_SYNC_LIMIT = 100;
+const MAX_SYNC_LIMIT = 500;
+
 
 @Injectable()
 export class SyncService {
@@ -22,12 +33,99 @@ export class SyncService {
     private networksRepository: Repository<Network>
   ) {}
 
-  async getStatus(userId: string, query: SyncStatusQueryDto) {
-    throw new NotImplementedException('Sync status not yet implemented');
+  async getStatus(userId: string, query: SyncStatusQueryDto): Promise<SyncStatusResponseDto> {
+    const since = query.since ? new Date(query.since) : new Date(0);
+
+    if (Number.isNaN(since.getTime())) {
+      throw new BadRequestException('Invalid "since" timestamp');
+    }
+
+    const updated_count = await this.networksRepository.count({
+      where: { updated_at: MoreThan(since) },
+    });
+
+    return {
+      updated_count,
+      server_time: new Date().toISOString(),
+    };
   }
 
-  async batchUpload(userId: string, dto: BatchUploadDto) {
-    throw new NotImplementedException('Batch upload not yet implemented');
+
+
+  async getUpdates(
+    userId: string,
+    sinceParam: string,
+    query: SyncUpdatesQueryDto,
+  ): Promise<SyncUpdatesResponseDto> {
+    const since = new Date(sinceParam);
+    if (Number.isNaN(since.getTime())) {
+      throw new BadRequestException('Invalid "since" timestamp');
+    }
+
+    const requestedLimit = query.limit ?? DEFAULT_SYNC_LIMIT;
+    const limit = Math.min(requestedLimit, MAX_SYNC_LIMIT);
+
+    const updated_networks = await this.networksRepository.find({
+      where: { updated_at: MoreThan(since) },
+      order: { updated_at: 'ASC' },
+      take: limit + 1,
+    });
+
+    const has_more = updated_networks.length > limit;
+    if (has_more) updated_networks.pop();
+
+    const next_since = has_more
+      ? updated_networks[updated_networks.length - 1].updated_at.toISOString()
+      : new Date().toISOString();
+
+    return {
+      updated_networks,
+      global_stats: {},
+      has_more,
+      next_since,
+      server_time: new Date().toISOString(),
+    };
+  }
+
+  async batchUpload(
+    userId: string,
+    dto: BatchUploadDto,
+  ): Promise<BatchUploadResponseDto> {
+    const results: BatchUploadResultDto[] = [];
+
+    for (const scan of dto.scans) {
+      try {
+        const uploaded = await this.uploadScan(userId, scan);
+        results.push({
+          client_scan_id: scan.client_scan_id,
+          status: 'CREATED',
+          server_scan_id: uploaded.server_scan_id,
+          error: null,
+        });
+      } catch (err) {
+        results.push({
+          client_scan_id: scan.client_scan_id,
+          status: 'REJECTED',
+          server_scan_id: null,
+          error: this.mapBatchError(err),
+        });
+      }
+    }
+
+    return { results };
+  }
+
+  private mapBatchError(err: unknown): { error: string; message: string } {
+    if (err instanceof ConflictException) {
+      return { error: 'DUPLICATE', message: err.message };
+    }
+    if (err instanceof BadRequestException) {
+      return { error: 'VALIDATION_FAILED', message: err.message };
+    }
+    return {
+      error: 'INTERNAL_ERROR',
+      message: err instanceof Error ? err.message : 'Unknown error',
+    };
   }
 
 
