@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'webserver/**'
+      - '.github/workflows/webserver.yml'
 
 jobs:
   deploy:
@@ -15,12 +16,21 @@ jobs:
     steps:
       - name: Deploy to Vultr
         uses: appleboy/ssh-action@v1
+        env:
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+          METRICS_API_KEY: ${{ secrets.METRICS_API_KEY }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         with:
           host: ${{ secrets.VULTR_HOST }}
           username: ${{ secrets.VULTR_USER }}
           key: ${{ secrets.VULTR_SSH }}
+          envs: DB_USERNAME,DB_PASSWORD,DB_DATABASE,JWT_SECRET,CORS_ORIGIN,METRICS_API_KEY,GRAFANA_ADMIN_PASSWORD
           script: |
-            set -e
+            set -euo pipefail
 
             REPO_URL="https://github.com/${{ github.repository }}.git"
             APP_DIR="$HOME/app"
@@ -34,27 +44,44 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            cat > ./webserver/.env << EOF
-            PORT=80
+            cd webserver
+
+            : "${METRICS_API_KEY:?METRICS_API_KEY secret is required}"
+            : "${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD secret is required}"
+            : "${JWT_SECRET:?JWT_SECRET secret is required}"
+
+            umask 077
+            cat > .env << EOF
+            PORT=3000
             NODE_ENV=production
 
             DB_HOST=postgres
             DB_PORT=5432
-            DB_USERNAME=${{ secrets.DB_USERNAME }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_DATABASE=${{ secrets.DB_DATABASE }}
+            DB_USERNAME=${DB_USERNAME}
+            DB_PASSWORD=${DB_PASSWORD}
+            DB_DATABASE=${DB_DATABASE}
 
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_SECRET=${JWT_SECRET}
             JWT_ACCESS_EXPIRATION=3600
             JWT_REFRESH_EXPIRATION=2592000
 
             THROTTLE_TTL=60000
             THROTTLE_LIMIT=100
 
-            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-            EOF
+            CORS_ORIGIN=${CORS_ORIGIN}
 
-            cd webserver
-            docker compose build
-            docker compose down
-            docker compose up -d
+            LOG_LEVEL=info
+            DB_SLOW_QUERY_MS=500
+
+            METRICS_API_KEY=${METRICS_API_KEY}
+            GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+            EOF
+            chmod 600 .env
+
+            COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+
+            $COMPOSE pull --ignore-buildable
+            $COMPOSE build --pull api
+            $COMPOSE up -d --remove-orphans
+
+            docker image prune -f
