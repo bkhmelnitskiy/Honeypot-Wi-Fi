@@ -8,7 +8,7 @@
 
 ## About the project
 
-Public and semi-public Wi-Fi networks (cafés, airports, hotels, conference venues) are a constant source of attacks against unsuspecting users — rogue access points, evil twins, deauthentication floods, weak or missing encryption, captive-portal phishing. Most of these threats are detectable from the air, but no convenient consumer-grade tool exists that gives a non-expert user a clear "is this network safe?" answer.
+Public and semi-public Wi-Fi networks (cafés, airports, hotels, conference venues) are a constant source of attacks against unsuspecting users - rogue access points, evil twins, deauthentication floods, weak or missing encryption, captive-portal phishing. Most of these threats are detectable from the air, but no convenient consumer-grade tool exists that gives a non-expert user a clear "is this network safe?" answer.
 
 **Honeypot Wi-Fi** is a small, battery-powered IoT device that:
 
@@ -33,9 +33,9 @@ This is an active student R&D project. The repository tracks ongoing work; the a
 +----------------------------+         +--------------------+         +--------------+
 ```
 
-- **Sensor (device)** — passive 802.11 capture, frame parsing, lightweight pre-filtering.
-- **Backend** — REST API, security-analysis logic, classification engine, event log.
-- **Mobile app** — read-only client showing nearby networks and their assigned risk levels.
+- **Sensor (device)** - passive 802.11 capture, frame parsing, lightweight pre-filtering.
+- **Backend** - REST API, security-analysis logic, classification engine, event log.
+- **Mobile app** - read-only client showing nearby networks and their assigned risk levels.
 
 ## Detection capabilities (target list)
 
@@ -103,8 +103,8 @@ The project is developed as part of a student R&D programme at **AGH University 
 
 For collaboration, feedback, or research enquiries:
 
-**Bogdan Khmelnitskiy** — Project Manager
-khmelnitskiy2050@gmail.com
+**Bogdan Khmelnitskiy** - Project Manager
+bkhmelnitskiy@student.agh.edu.pl
 
 We are particularly interested in talking to:
 - Cybersecurity product companies working on NDR / Wi-Fi security.
