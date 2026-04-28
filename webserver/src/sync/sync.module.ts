@@ -3,9 +3,9 @@ import { SyncController } from './sync.controller';
 import { SyncService } from './sync.service';
 import { ScansModule } from '../scans/scans.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Scan } from 'src/scans/entities/scan.entity';
-import { Attack } from 'src/scans/entities/attack.entity';
-import { Network } from 'src/networks/entities/network.entity';
+import { Scan } from '../scans/entities/scan.entity';
+import { Attack } from '../scans/entities/attack.entity';
+import { Network } from '../networks/entities/network.entity';
 
 @Module({
   imports: [ScansModule, TypeOrmModule.forFeature([Scan, Attack,Network])],

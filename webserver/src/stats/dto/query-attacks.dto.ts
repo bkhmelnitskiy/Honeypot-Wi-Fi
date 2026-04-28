@@ -1,17 +1,10 @@
-import { IsOptional, IsString, IsUUID, IsIn, IsISO8601 } from 'class-validator';
+import { IsOptional, IsEnum, IsUUID, IsISO8601 } from 'class-validator';
+import { AttackType } from '../../scans/entities/attack.entity';
 
 export class QueryAttacksDto {
   @IsOptional()
-  @IsString()
-  @IsIn([
-    'ARP_SPOOFING',
-    'DNS_SPOOFING',
-    'EVIL_TWIN',
-    'DEAUTHENTICATION',
-    'NETWORK_SCAN',
-    'MALWARE_PROPAGATION',
-  ])
-  type?: string;
+  @IsEnum(AttackType)
+  type?: AttackType;
 
   @IsOptional()
   @IsISO8601()

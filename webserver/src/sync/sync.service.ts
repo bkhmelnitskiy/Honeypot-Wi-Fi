@@ -1,13 +1,14 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotImplementedException } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { SyncStatusQueryDto } from './dto/sync-status-query.dto';
 import { BatchUploadDto } from './dto/batch-upload.dto';
-import { Scan } from 'src/scans/entities/scan.entity';
-import { Attack } from 'src/scans/entities/attack.entity';
-import { Network } from 'src/networks/entities/network.entity';
+import { Scan } from '../scans/entities/scan.entity';
+import { Attack } from '../scans/entities/attack.entity';
+import { Network } from '../networks/entities/network.entity';
 import { ScanUploadDto } from './dto/scan-upload.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UploadScanResponseDto } from './dto/sync-response.dto';
 
 @Injectable()
 export class SyncService {
@@ -22,40 +23,23 @@ export class SyncService {
   ) {}
 
   async getStatus(userId: string, query: SyncStatusQueryDto) {
-    // TODO: implement incremental sync - return updated networks since last sync
-    return {
-      updated_networks: [],
-      global_stats: {},
-      has_more: false,
-      next_since: null,
-      server_time: new Date().toISOString(),
-    };
+    throw new NotImplementedException('Sync status not yet implemented');
   }
 
   async batchUpload(userId: string, dto: BatchUploadDto) {
-    // TODO: implement batch scan upload with per-scan validation
-    return {
-      results: dto.scans.map((scan) => ({
-        client_scan_id: scan.client_scan_id,
-        status: 'CREATED',
-        server_scan_id: '',
-        error: null,
-      })),
-    };
+    throw new NotImplementedException('Batch upload not yet implemented');
   }
 
 
-  async uploadScan(userId: string, dto: ScanUploadDto) {
+  async uploadScan(userId: string, dto: ScanUploadDto): Promise<UploadScanResponseDto> {
 
     if (!this.checkHash(dto)) {
       throw new BadRequestException('Invalid payload hash');
     }
 
-    if (dto.payload_hash) {
-      const isDuplicate = await this.scansRepository.findOne({ where: { payload_hash: dto.payload_hash } });
-      if (isDuplicate) {
-        throw new ConflictException('Duplicate scan upload');
-      }
+    const isDuplicate = await this.scansRepository.findOne({ where: { client_scan_id: dto.client_scan_id } });
+    if (isDuplicate) {
+      throw new ConflictException('Duplicate scan upload');
     }
 
     await this.networksRepository.upsert(
