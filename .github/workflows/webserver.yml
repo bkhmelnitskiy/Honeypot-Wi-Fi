@@ -82,6 +82,7 @@ jobs:
 
             $COMPOSE pull --ignore-buildable
             $COMPOSE build --pull api
-            $COMPOSE up -d --remove-orphans
+            $COMPOSE down --remove-orphans
+            $COMPOSE up -d
 
             docker image prune -f
