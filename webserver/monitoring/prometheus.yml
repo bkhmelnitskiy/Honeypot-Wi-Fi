@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    service: honeypot-webserver
+
+scrape_configs:
+  - job_name: 'honeypot-api'
+    metrics_path: /metrics
+    scheme: http
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/metrics_token
+    static_configs:
+      - targets: ['api:3000']
+        labels:
+          app: webserver
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
