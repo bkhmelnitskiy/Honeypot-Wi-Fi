@@ -3,8 +3,8 @@ services:
     build:
       context: .
       target: dev
-    ports:
-      - '${PORT:-3000}:${PORT:-3000}'
+    expose:
+      - '${PORT:-3000}'
     env_file:
       - .env
     volumes:
@@ -36,8 +36,8 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.1.0
-    ports:
-      - '9090:9090'
+    expose:
+      - '9090'
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -52,8 +52,8 @@ services:
 
   loki:
     image: grafana/loki:3.3.0
-    ports:
-      - '3100:3100'
+    expose:
+      - '3100'
     volumes:
       - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml:ro
       - loki-data:/loki
@@ -73,8 +73,8 @@ services:
 
   grafana:
     image: grafana/grafana:12.4.0
-    ports:
-      - '3001:3000'
+    expose:
+      - '3000'
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: 'false'

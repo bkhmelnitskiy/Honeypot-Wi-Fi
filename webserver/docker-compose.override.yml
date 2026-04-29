@@ -1,0 +1,16 @@
+services:
+  api:
+    ports:
+      - '${PORT:-3000}:${PORT:-3000}'
+
+  prometheus:
+    ports:
+      - '9090:9090'
+
+  loki:
+    ports:
+      - '3100:3100'
+
+  grafana:
+    ports:
+      - '3001:3000'
