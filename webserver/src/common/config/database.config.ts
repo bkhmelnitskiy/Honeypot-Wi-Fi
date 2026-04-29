@@ -24,7 +24,7 @@ export const databaseConfig: TypeOrmModuleAsyncOptions = {
       password: configService.get<string>('DB_PASSWORD', 'honeypot'),
       database: configService.get<string>('DB_DATABASE', 'honeypot'),
       autoLoadEntities: true,
-      synchronize: configService.get<string>('NODE_ENV') === 'development',
+      synchronize: true, //configService.get<string>('NODE_ENV') === 'development',
       maxQueryExecutionTime: slowThresholdMs,
       logger: new TypeOrmSlowQueryLogger(
         slowThresholdMs,
