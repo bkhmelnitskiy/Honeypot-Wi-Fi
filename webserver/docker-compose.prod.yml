@@ -4,7 +4,7 @@ services:
       context: .
       target: prod
     ports:
-      - '${PORT:-80}:${PORT:-3000}'
+      - '${HOST_PORT:-80}:${PORT:-3000}'
     volumes: []
     command: ["node", "dist/main"]
     read_only: true
@@ -41,7 +41,7 @@ services:
 
   grafana:
     ports:
-      - '127.0.0.1:3001:3000'
+      - '127.0.0.1:3333:3000'
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
       GF_USERS_ALLOW_SIGN_UP: 'false'

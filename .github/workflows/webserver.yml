@@ -53,6 +53,7 @@ jobs:
             umask 077
             cat > .env << EOF
             PORT=3000
+            HOST_PORT=80
             NODE_ENV=production
 
             DB_HOST=postgres
@@ -78,7 +79,7 @@ jobs:
             EOF
             chmod 600 .env
 
-            COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+            COMPOSE="docker compose -p honeypot -f docker-compose.yml -f docker-compose.prod.yml"
 
             $COMPOSE pull --ignore-buildable
             $COMPOSE build --pull api
