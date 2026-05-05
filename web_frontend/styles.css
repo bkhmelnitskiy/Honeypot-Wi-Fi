@@ -1,0 +1,14 @@
+:root {
+    --main-color: white;
+    --contrast-color: #78CAE9;
+}
+
+.icon {
+    stroke-width: 5;
+    stroke: var(--main-color)
+}
+
+.icon.highlighted {
+    stroke: var(--contrast-color);
+    box-shadow: 0px 0px 4px 15px var(--main-color);
+}
