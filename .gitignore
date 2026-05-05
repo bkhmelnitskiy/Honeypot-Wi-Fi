@@ -3,6 +3,7 @@
 /webserver/.env
 random/*
 .idea*
+.claude
 test*
 PLAN*
 
