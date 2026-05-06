@@ -1,6 +1,6 @@
 <template>
     <div>
-        no tutaj możesz użyć czego tam chcesz 
+        
         <div>
             <span>Total scans globally:</span>
             <span>{{ stats.globalStats?.total_scans }}</span>
@@ -19,7 +19,7 @@
         </div>
     </div>
 </template>
-
+// tutaj możesz użyć czego tam chcesz 
 <script setup>
 import { useGlobalStatsStore } from '@/stores/globalStats'
 

@@ -41,8 +41,18 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
+  const userStore = useUserStore()
+
+  if (to.name === 'auth') {
+    try {
+      await userStore.fetchUser()
+      return { name: 'account' }
+    } catch {
+      return
+    }
+  }
+
   if (!to.meta.public) {
-    const userStore = useUserStore()
     try {
       await userStore.fetchUser()
     } catch {
