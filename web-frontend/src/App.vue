@@ -1,8 +1,8 @@
 <script setup>
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import HelloWorld from './components/HelloWorld.vue'
 import axios from 'axios'
+import Sidebar from './components/Sidebar.vue'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -19,86 +19,61 @@ async function handleLogout() {
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+    <div class="app">
+      <Sidebar />
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/scans">My Scans</RouterLink>
-        <RouterLink to="/auth">Login</RouterLink>
-        <RouterLink to="/account">Account</RouterLink>  
-        <RouterLink to="/networks">Networks</RouterLink>
-        <RouterLink to="/rankings">Rankings</RouterLink>
-        <a href="#" @click.prevent="handleLogout">Logout</a>  
-      </nav>
+      <RouterView />
     </div>
+    <!-- <nav class="sidebar">
+      <RouterLink to="/">Home</RouterLink>
+      <RouterLink to="/scans">My Scans</RouterLink>
+      <RouterLink to="/auth">Login</RouterLink>
+      <RouterLink to="/account">Account</RouterLink>  
+      <RouterLink to="/networks">Networks</RouterLink>
+      <RouterLink to="/rankings">Rankings</RouterLink>
+      <a href="#" @click.prevent="handleLogout">Logout</a>  
+    </nav> -->
   </header>
 
-  <RouterView />
+  
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<style lang="scss">
+:root {
+    --main-color: white;
+    --contrast-color: #78CAE9;
+    --font-dark: #505050;
+    --font-light: #B2B2B2;
+    --sidebar-icon-width: 96px;
+}
+* {
+  font-family: "Michroma", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color: var(--font-dark);
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+body {
+  margin: 0;
+  padding: 0;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+.sidebar.icon {
+    stroke-width: 5;
+    stroke: var(--main-color)
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+.sidebar.icon.highlighted {
+    stroke: var(--contrast-color);
+    box-shadow: 0px 0px 4px 15px var(--main-color);
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
+.app{
     display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+    main {
+        flex: 1 1 0;
+        padding: 2rem;
+    }
 }
 </style>
