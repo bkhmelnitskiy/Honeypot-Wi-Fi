@@ -2,19 +2,19 @@
     <aside>
         <div class="menu">
             <router-link class="button" to="/account">
-                <IconBase /> Account
+                <IconAccount/> Account
             </router-link>
             <router-link class="button" to="/">
-                <IconAccount/> Dashboard
+                <IconDashboard/> Dashboard
             </router-link>
             <router-link class="button" to="/scans">
-                <IconAccount/> My scans
+                <IconClock/> My scans
             </router-link>
             <router-link class="button" to="rankings">
-                <IconAccount/> Rankings
+                <IconRankings/> Rankings
             </router-link>
             <router-link class="button" to="/networks">
-                <IconAccount/> Network search
+                <IconNetSearch/> Network search
             </router-link>
         </div>
     </aside>
@@ -25,9 +25,12 @@
     import IconAccount from "./icons/IconAccount.vue"
     import IconClock from "./icons/IconClock.vue"
     import IconRankings from "./icons/IconRankings.vue"
+    import IconDashboard from "./icons/IconDashboard.vue"
+    import IconNetSearch from "./icons/IconNetSearch.vue"
 </script>
 
 <style lang="scss" scoped>
+
 aside {
     display:flex;
     flex-direction: column;
@@ -39,7 +42,13 @@ aside {
     background-color: var(--contrast-color);
     color: var(--main-color);
 }
-button{
+
+.button{
     color: var(--main-color);
+    text-align: center;
+}
+
+.icon{
+    width: 96px;
 }
 </style>
