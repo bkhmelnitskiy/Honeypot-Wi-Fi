@@ -21,7 +21,6 @@
 </template>
 
 <script setup>
-    import IconBase from "./icons/IconBase.vue"
     import IconAccount from "./icons/IconAccount.vue"
     import IconClock from "./icons/IconClock.vue"
     import IconRankings from "./icons/IconRankings.vue"

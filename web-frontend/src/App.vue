@@ -2,7 +2,7 @@
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import axios from 'axios'
-import Sidebar from './components/Sidebar.vue'
+import Sidebar from '@/components/Sidebar.vue'
 
 const userStore = useUserStore()
 const router = useRouter()
