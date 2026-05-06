@@ -165,12 +165,17 @@ export class StatsService {
   }
 
   private buildScansPerDayQuery() {
-    return this.scansRepository.createQueryBuilder('scan')
-      .select("DATE_TRUNC('day', scan.started_at)", 'date')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy("DATE_TRUNC('day', scan.started_at)")
-      .orderBy("DATE_TRUNC('day', scan.started_at)", 'DESC')
-      .limit(30);
+    return this.scansRepository.manager
+      .createQueryBuilder()
+      .select('series.day::date', 'date')
+      .addSelect('COALESCE(COUNT(scan.server_scan_id), 0)::int', 'count')
+      .from(
+        `(SELECT generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, INTERVAL '1 day') AS day)`,
+        'series',
+      )
+      .leftJoin(Scan, 'scan', "DATE_TRUNC('day', scan.started_at) = series.day::date")
+      .groupBy('series.day')
+      .orderBy('series.day', 'DESC');
   }
 
   private buildTopDangerousQuery() {
