@@ -26,9 +26,11 @@ async function handleLogout() {
 
       <nav>
         <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/scans">My Scans</RouterLink>
         <RouterLink to="/auth">Login</RouterLink>
         <RouterLink to="/account">Account</RouterLink>  
+        <RouterLink to="/networks">Networks</RouterLink>
+        <RouterLink to="/rankings">Rankings</RouterLink>
         <a href="#" @click.prevent="handleLogout">Logout</a>  
       </nav>
     </div>

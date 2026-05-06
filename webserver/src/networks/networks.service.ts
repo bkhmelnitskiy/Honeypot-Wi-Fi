@@ -41,7 +41,7 @@ export class NetworksService {
       qb.andWhere('network.ssid ILIKE :search', { search: `%${query.search}%` });
     }
     if (query.bssid) {
-      qb.andWhere('UPPER(network.bssid) = UPPER(:bssid)', { bssid: query.bssid });
+      qb.andWhere('network.bssid ILIKE :bssid', { bssid: `%${query.bssid}%` });
     }
     if (query.lat != null && query.lng != null && query.radius_km != null) {
       qb.andWhere('network.gps_latitude IS NOT NULL')

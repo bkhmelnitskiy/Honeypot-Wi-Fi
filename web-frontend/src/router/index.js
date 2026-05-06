@@ -17,15 +17,25 @@ const router = createRouter({
       component: () => import('../views/AccountView.vue'),  
     },
     {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue'),
+      path: '/scans',
+      name: 'MyScans',
+      component: () => import('../views/MyScansView.vue'),
     },
     {
       path: '/auth',
       name: 'auth',
       component: () => import('../views/AuthView.vue'),
       meta: { public: true },
+    },
+    {
+      path: '/networks',
+      name: 'networks',
+      component: () => import('../views/NetworksView.vue'),
+    },
+    {
+      path: '/rankings',
+      name: 'rankings',
+      component: () => import('../views/RankingsView.vue'),
     }
   ],
 })
