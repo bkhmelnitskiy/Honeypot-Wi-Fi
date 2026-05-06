@@ -1,6 +1,20 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 import HelloWorld from './components/HelloWorld.vue'
+import axios from 'axios'
+
+const userStore = useUserStore()
+const router = useRouter()
+
+async function handleLogout() {
+  try {
+    await axios.post('/api/v1/auth/logout', {}, { withCredentials: true })
+  } finally {
+    userStore.clearUser()
+    router.push({ name: 'auth' })
+  }
+}
 </script>
 
 <template>
@@ -12,7 +26,12 @@ import HelloWorld from './components/HelloWorld.vue'
 
       <nav>
         <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/scans">My Scans</RouterLink>
+        <RouterLink to="/auth">Login</RouterLink>
+        <RouterLink to="/account">Account</RouterLink>  
+        <RouterLink to="/networks">Networks</RouterLink>
+        <RouterLink to="/rankings">Rankings</RouterLink>
+        <a href="#" @click.prevent="handleLogout">Logout</a>  
       </nav>
     </div>
   </header>

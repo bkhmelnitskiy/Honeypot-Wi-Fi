@@ -24,8 +24,10 @@ export class ScansService {
       .leftJoinAndSelect('scan.network', 'network')
       .where('scan.user_id = :userId', { userId });
 
-    if (query.network_id) {
-      qb.andWhere('scan.network_id = :networkId', { networkId: query.network_id });
+    if (query.search) {
+      qb.andWhere('(network.ssid ILIKE :search OR network.bssid ILIKE :search)', {
+        search: `%${query.search}%`,
+      });
     }
     if (query.since) {
       qb.andWhere('scan.started_at >= :since', { since: query.since });
