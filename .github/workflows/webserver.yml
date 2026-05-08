@@ -3,8 +3,6 @@ name: Deploy Webserver to Vultr
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
     paths:
       - 'webserver/**'
       - 'web-frontend/**'
@@ -27,11 +25,13 @@ jobs:
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           CADDY_HOSTNAME: ${{ secrets.CADDY_HOSTNAME }}
           CADDY_ACME_EMAIL: ${{ secrets.CADDY_ACME_EMAIL }}
+          DEPLOY_SHA: ${{ github.sha }}
+          DEPLOY_REF: ${{ github.ref }}
         with:
           host: ${{ secrets.VULTR_HOST }}
           username: ${{ secrets.VULTR_USER }}
           key: ${{ secrets.VULTR_SSH }}
-          envs: DB_USERNAME,DB_PASSWORD,DB_DATABASE,JWT_SECRET,CORS_ORIGIN,METRICS_API_KEY,GRAFANA_ADMIN_PASSWORD,CADDY_HOSTNAME,CADDY_ACME_EMAIL
+          envs: DB_USERNAME,DB_PASSWORD,DB_DATABASE,JWT_SECRET,CORS_ORIGIN,METRICS_API_KEY,GRAFANA_ADMIN_PASSWORD,CADDY_HOSTNAME,CADDY_ACME_EMAIL,DEPLOY_SHA,DEPLOY_REF
           script: |
             set -euo pipefail
 
@@ -44,8 +44,9 @@ jobs:
             fi
 
             cd "$APP_DIR"
-            git fetch origin main
-            git reset --hard origin/main
+            echo "Deploying ref=$DEPLOY_REF sha=$DEPLOY_SHA"
+            git fetch origin "$DEPLOY_SHA"
+            git reset --hard "$DEPLOY_SHA"
 
             cd webserver
 
@@ -94,7 +95,7 @@ jobs:
             COMPOSE="docker compose -p honeypot -f docker-compose.yml -f docker-compose.prod.yml"
 
             $COMPOSE pull --ignore-buildable
-            $COMPOSE build --pull api frontend
+            $COMPOSE build --pull
             $COMPOSE down --remove-orphans
             $COMPOSE up -d
 
