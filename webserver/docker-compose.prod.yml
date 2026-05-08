@@ -74,10 +74,11 @@ services:
         limits:
           memory: 128M
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost/ >/dev/null 2>&1 || exit 1']
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost/ 2>&1 | grep -q "200 OK" || exit 1']
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 10s
 
   postgres:
     security_opt:

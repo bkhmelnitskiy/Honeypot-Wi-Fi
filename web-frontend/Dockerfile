@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Stage: Production (nginx serving built assets + /api proxy)
-FROM nginx:1.29.8 AS prod
+FROM nginx:1.29.8-alpine AS prod
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
