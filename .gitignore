@@ -3,5 +3,48 @@
 /webserver/.env
 random/*
 .idea*
+.claude
 test*
 PLAN*
+
+
+# FRONTEND
+#Logs
+web-frontend/logs
+web-frontend/*.log
+web-frontend/npm-debug.log*
+web-frontend/yarn-debug.log*
+web-frontend/yarn-error.log*
+web-frontend/pnpm-debug.log*
+web-frontend/lerna-debug.log*
+
+web-frontend/node_modules
+web-frontend/.DS_Store
+web-frontend/dist
+web-frontend/dist-ssr
+web-frontend/coverage
+web-frontend/*.local
+
+web-frontend/# Editor directories and files
+web-frontend/.vscode/*
+web-frontend/!.vscode/extensions.json
+web-frontend/.idea
+web-frontend/*.suo
+web-frontend/*.ntvs*
+web-frontend/*.njsproj
+web-frontend/*.sln
+web-frontend/*.sw?
+
+web-frontend/*.tsbuildinfo
+
+web-frontend/.eslintcache
+
+# Cypress
+web-frontend//cypress/videos/
+web-frontend//cypress/screenshots/
+
+# Vitest
+web-frontend/__screenshots__/
+
+# Vite
+web-frontend/*.timestamp-*-*.mjs

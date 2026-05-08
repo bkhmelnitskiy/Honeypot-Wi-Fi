@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -16,6 +17,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   app.setGlobalPrefix('api/v1', { exclude: ['metrics'] });
+  app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -26,6 +28,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.enableCors({
     origin: configService.get<string>('CORS_ORIGIN', 'http://localhost:3000'),
+    credentials: true,
   });
 
   if (configService.get<string>('NODE_ENV') !== 'production') {
@@ -37,6 +40,11 @@ async function bootstrap() {
         { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', in: 'header' },
         'access-token',
       )
+      .addCookieAuth('access_token', {
+        type: 'apiKey',
+        in: 'cookie',
+        name: 'access_token',
+      })
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

@@ -9,10 +9,10 @@ export class QueryNetworksDto extends PaginationQueryDto {
   @IsString()
   search?: string;
 
-  @ApiProperty({ required: false, example: 'AA:BB:CC:DD:EE:FF' })
+  @ApiProperty({ required: false, example: 'AA:BB', description: 'Full or partial BSSID' })
   @IsOptional()
   @IsString()
-  @Matches(/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/, { message: 'bssid must be a valid MAC address (AA:BB:CC:DD:EE:FF)' })
+  @Matches(/^[0-9A-Fa-f:]+$/, { message: 'bssid must contain only hex characters and colons' })
   bssid?: string;
 
   @ApiProperty({ required: false, enum: ['safety_score', 'total_scans', 'last_scanned_at', 'ssid'] })

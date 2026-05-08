@@ -2,14 +2,10 @@ services:
   api:
     build:
       context: .
-      target: dev
     expose:
       - '${PORT:-3000}'
     env_file:
       - .env
-    volumes:
-      - ./src:/app/src
-    command: npm run start:dev
     depends_on:
       postgres:
         condition: service_healthy
@@ -28,7 +24,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD', 'pg_isready', '-U', 'honeypot']
+      test: ['CMD', 'pg_isready', '-U', '${DB_USERNAME:-honeypot}']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -93,6 +89,8 @@ volumes:
   prometheus-data:
   loki-data:
   grafana-data:
+  caddy-data:
+  caddy-config:
 
 secrets:
   metrics_token:
