@@ -16,8 +16,21 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
+    port: 5173,
+    strictPort: true,
+    watch: {
+      usePolling: true,
+    },
+    hmr: {
+      host: 'localhost',
+      port: 5173,
+    },
     proxy: {
-      '/api': 'http://209.250.226.32/'
-    }
-  }
+      '/api': {
+        target: process.env.VITE_API_TARGET || 'http://api:3000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

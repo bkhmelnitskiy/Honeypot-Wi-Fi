@@ -10,7 +10,7 @@
             <router-link class="button" to="/scans">
                 <IconAccount/> My scans
             </router-link>
-            <router-link class="button" to="rankings">
+            <router-link class="button" to="/rankings">
                 <IconAccount/> Rankings
             </router-link>
             <router-link class="button" to="/networks">
