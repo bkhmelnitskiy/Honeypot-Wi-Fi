@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/godbus/dbus/v5"
 )
@@ -27,6 +28,7 @@ const (
 var (
 	ErrAdapterNotPowered = errors.New("dbus: adapter is not powered")
 	ErrAdapterStopped    = errors.New("dbus: adapter is powered off or stopped discovering")
+	ErrDisconnected      = errors.New("dbus: already disconnected from peer")
 )
 
 type object struct {
@@ -69,6 +71,8 @@ type blueZ struct {
 	signalMatchPropertiesChanged []dbus.MatchOption
 	signalMatchInterfacesAdded   []dbus.MatchOption
 	signalMatchInterfacesRemoved []dbus.MatchOption
+	disconnected                 bool
+	disconnectedMutex            sync.Mutex
 }
 
 func newBlueZ() (*blueZ, error) {
@@ -198,7 +202,23 @@ func (b *blueZ) findPairedDevice() (properties, bool, error) {
 	return properties{}, false, nil
 }
 
+func (b *blueZ) setDisconnected(disconnected bool) {
+	b.disconnectedMutex.Lock()
+	b.disconnected = disconnected
+	b.disconnectedMutex.Unlock()
+}
+
+func (b *blueZ) isDisconnected() bool {
+	b.disconnectedMutex.Lock()
+	defer b.disconnectedMutex.Unlock()
+	return b.disconnected
+}
+
 func (b *blueZ) disconnect(path dbus.ObjectPath) error {
+	if b.isDisconnected() {
+		return nil
+	}
+	defer b.setDisconnected(true)
 	obj := b.newObject(deviceIface, path)
 	var connected bool
 	var err error
