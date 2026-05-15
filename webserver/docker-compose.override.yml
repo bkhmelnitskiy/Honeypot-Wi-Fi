@@ -1,7 +1,42 @@
 services:
   api:
+    build:
+      target: dev
+    command: npm run start:dev
+    volumes:
+      - ./src:/app/src
+      - ./test:/app/test
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.build.json:/app/tsconfig.build.json
+      - ./nest-cli.json:/app/nest-cli.json
+    environment:
+      CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '${PORT:-3000}:${PORT:-3000}'
+
+  frontend:
+    build:
+      context: ../web-frontend
+      target: dev
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ../web-frontend/src:/app/src
+      - ../web-frontend/public:/app/public
+      - ../web-frontend/index.html:/app/index.html
+      - ../web-frontend/vite.config.js:/app/vite.config.js
+      - ../web-frontend/jsconfig.json:/app/jsconfig.json
+      - ../web-frontend/package.json:/app/package.json
+      - ../web-frontend/package-lock.json:/app/package-lock.json
+    environment:
+      CHOKIDAR_USEPOLLING: 'true'
+      VITE_API_TARGET: http://api:3000
+    ports:
+      - '5173:5173'
+    depends_on:
+      - api
+    restart: unless-stopped
 
   prometheus:
     ports:
