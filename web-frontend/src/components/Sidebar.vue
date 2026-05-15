@@ -2,26 +2,25 @@
     <aside>
         <div class="menu">
             <router-link class="button" to="/account">
-                <IconAccount/> Account
+                <IconAccount/> <p>Account</p>
             </router-link>
             <router-link class="button" to="/">
-                <IconDashboard/> Dashboard
+                <IconDashboard/> <p>Dashboard</p>
             </router-link>
             <router-link class="button" to="/scans">
-                <IconClock/> My scans
+                <IconClock/> <p>My scans</p>
             </router-link>
             <router-link class="button" to="rankings">
-                <IconRankings/> Rankings
+                <IconRankings/> <p>Rankings</p>
             </router-link>
             <router-link class="button" to="/networks">
-                <IconNetSearch/> Network search
+                <IconNetSearch/> <p>Network search</p>
             </router-link>
         </div>
     </aside>
 </template>
 
 <script setup>
-    import IconBase from "./icons/IconBase.vue"
     import IconAccount from "./icons/IconAccount.vue"
     import IconClock from "./icons/IconClock.vue"
     import IconRankings from "./icons/IconRankings.vue"
@@ -34,21 +33,36 @@
 aside {
     display:flex;
     flex-direction: column;
-    width: calc(2rem + var(--sidebar-icon-width));
+    width: var(--sidebar-icon-width);
     min-height: 100vh;
     overflow: hidden;
-    padding: 1rem;
+    padding: 1.5rem;
 
     background-color: var(--contrast-color);
     color: var(--main-color);
 }
 
-.button{
+.button {
     color: var(--main-color);
     text-align: center;
+    padding-top: 2rem;
+    font-size: small;
+    margin: 0;
 }
 
-.icon{
+.icon {
+    width: var(--sidebar-icon-width);
+}
+
+.menu {
+    margin: 0;
+    padding: 0;
     width: 96px;
+}
+
+p {
+    width: 96px;
+    color: var(--main-color);
+    margin-top: 0;
 }
 </style>

@@ -46,6 +46,7 @@ async function handleLogout() {
     --font-light: #B2B2B2;
     --sidebar-icon-width: 96px;
 }
+
 * {
   font-family: "Michroma", sans-serif;
   font-weight: 400;

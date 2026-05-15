@@ -1,7 +1,6 @@
 <template>
 <svg
-   width="96"
-   height="96"
+  class="icon"
    viewBox="0 0 112.11298 112.113"
    version="1.1"
    id="svg1"
