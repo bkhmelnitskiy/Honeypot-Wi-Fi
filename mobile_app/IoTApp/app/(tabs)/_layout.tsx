@@ -1,15 +1,9 @@
-import { initDB } from '@/constants/db';
+import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-import Colors from '@/constants/Colors';
-
 export default function TabLayout() {
-  React.useEffect(() => {
-    initDB();
-  }, []);
-
   return (
     <Tabs
       screenOptions={{
@@ -26,6 +20,16 @@ export default function TabLayout() {
         tabBarLabelStyle: { fontSize: 12 },
       }}
     >
+      <Tabs.Screen
+        name="Dashboard"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="speedometer-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
       <Tabs.Screen
         name="scan_screen"
         options={{
@@ -66,8 +70,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Hidden routes (not part of the bottom tab bar). */}
-      <Tabs.Screen name="Dashboard" options={{ href: null }} />
+      {/* Hidden routes (reachable via deep-links, not part of the bottom tab bar). */}
       <Tabs.Screen name="update_queue" options={{ href: null }} />
     </Tabs>
   );
