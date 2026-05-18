@@ -1,21 +1,21 @@
 <template>
-  <div>
+  <div class="window">
     <h1>Login</h1>
     <form @submit.prevent="handleSubmit">
-      <div>
-        <label for="email">Email:</label>
-        <input type="email" id="email" v-model="email" required />
+      <div style="margin-top: 1rem; margin-bottom: -0.5rem;">
+        <input type="email" id="email" class="form_input" placeholder="" v-model="email" required />
+        <label for="email" class="form_label">Email</label>
       </div>
-      <div>
-        <label for="password">Password:</label>
-        <input type="password" id="password" v-model="password" required />
+      <div style="margin-bottom: -1rem;">
+        <input type="password" id="password" class="form_input" placeholder="" v-model="password" required />
+        <label for="password" class="form_label">Password</label>
       </div>
+      <p style="font-size: small; color: var(--font-light); margin-bottom: 8px;">
+        Don't have an account?
+        <a href="#" @click.prevent="emit('switch')">Register here</a>.
+      </p>
       <button type="submit">Login</button>
     </form>
-    <p>
-      don't have an account?
-      <a href="#" @click.prevent="emit('switch')">Register here</a>.
-    </p>
     <p>{{ responseMessage }}</p>
   </div>
 </template>

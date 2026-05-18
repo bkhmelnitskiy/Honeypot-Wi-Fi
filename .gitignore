@@ -39,6 +39,8 @@ web-frontend/*.tsbuildinfo
 
 web-frontend/.eslintcache
 
+web-frontend/assets
+
 # Cypress
 web-frontend//cypress/videos/
 web-frontend//cypress/screenshots/

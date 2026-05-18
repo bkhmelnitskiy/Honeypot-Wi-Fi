@@ -3,7 +3,15 @@ import NetworkSearch from '@/components/NetworkSearch.vue';
 </script>
 
 <template>
-    <div>
+    <main>
         <NetworkSearch />
-    </div>
+    </main>
 </template>
+
+<style lang="scss">
+    main{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>

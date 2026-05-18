@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="window" style="height: min-content;">
         <h2>Scans per day</h2>
                    
         <div v-for="entry in stats.globalStats?.scans_per_day" :key="entry.date">

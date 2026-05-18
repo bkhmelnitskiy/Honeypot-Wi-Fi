@@ -7,14 +7,6 @@ import Sidebar from '@/components/Sidebar.vue'
 const userStore = useUserStore()
 const router = useRouter()
 
-async function handleLogout() {
-  try {
-    await axios.post('/api/v1/auth/logout', {}, { withCredentials: true })
-  } finally {
-    userStore.clearUser()
-    router.push({ name: 'auth' })
-  }
-}
 </script>
 
 <template>
@@ -24,15 +16,6 @@ async function handleLogout() {
 
       <RouterView />
     </div>
-    <!-- <nav class="sidebar">
-      <RouterLink to="/">Home</RouterLink>
-      <RouterLink to="/scans">My Scans</RouterLink>
-      <RouterLink to="/auth">Login</RouterLink>
-      <RouterLink to="/account">Account</RouterLink>  
-      <RouterLink to="/networks">Networks</RouterLink>
-      <RouterLink to="/rankings">Rankings</RouterLink>
-      <a href="#" @click.prevent="handleLogout">Logout</a>  
-    </nav> -->
   </header>
 
   
@@ -41,38 +24,34 @@ async function handleLogout() {
 <style lang="scss">
 :root {
     --main-color: white;
-    --contrast-color: #78CAE9;
+    --contrast-color: rgb(120, 202, 233);
     --font-dark: #505050;
     --font-light: #B2B2B2;
-    --sidebar-icon-width: 96px;
+    --red: #DF6F6F;
+    --yellow: #EFD775;
+    --green: #6ECE7E;
+    --sidebar-icon-width: 128px;
 }
+
+*, *::before, *::after { margin: 0; padding: 0; }
 
 * {
   font-family: "Michroma", sans-serif;
   font-weight: 400;
   font-style: normal;
-  color: var(--font-dark);
 }
 
+html,
 body {
   margin: 0;
   padding: 0;
 }
 
-.sidebar.icon {
-    stroke-width: 5;
-    stroke: var(--main-color)
-}
-
-.sidebar.icon.highlighted {
-    stroke: var(--contrast-color);
-    box-shadow: 0px 0px 4px 15px var(--main-color);
-}
-
 .app{
     display: flex;
-
+    color: var(--font-dark);
     main {
+        display: flex;
         flex: 1 1 0;
         padding: 2rem;
     }
