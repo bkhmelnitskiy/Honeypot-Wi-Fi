@@ -89,9 +89,17 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    const token = this.extractRefreshToken(req, dto);
-    await this.authService.logout(token);
+    const token =
+      (req.cookies as Record<string, string> | undefined)?.[REFRESH_TOKEN_COOKIE] ??
+      dto.refresh_token;
     this.cookieService.clearAuthCookies(res);
+    if (token) {
+      try {
+        await this.authService.logout(token);
+      } catch {
+        // token already revoked/invalid — cookies still cleared
+      }
+    }
   }
 
   private applyTokenCookies(
