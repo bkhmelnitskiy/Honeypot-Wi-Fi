@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div id="contributors" class="window" style="height: min-content;">
         <h2>Top contributors</h2>
         <div v-for="(contributor, index) in stats.globalStats?.top_contributors" :key="contributor.display_name">
             <span> #{{ index + 1 }} &nbsp;&nbsp;&nbsp;&nbsp; </span>  

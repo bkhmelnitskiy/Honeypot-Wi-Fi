@@ -1,6 +1,5 @@
 <template>
-    <div>
-        
+    <div class="window" style="height: min-content;">
         <div>
             <span>Total scans globally:</span>
             <span>{{ stats.globalStats?.total_scans }}</span>
