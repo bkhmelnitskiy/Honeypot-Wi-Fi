@@ -37,10 +37,14 @@ func run() error {
 	start := time.Now()
 	for {
 		i := rand.Int() % 50
-		ssid := fmt.Sprintf("mysuperwifi%d", i)
-		fmt.Printf("writing ssid: %s\n", ssid)
-		if err = c.WriteSSID(ssid); err != nil {
-			return err
+		s := fmt.Sprintf("mysuperwifi%d", i)
+		fmt.Printf("writing ssid: %s\n", s)
+		if err = c.WriteSSID(s); err != nil {
+			if err == dbus.ErrDisconnected {
+				return nil
+			} else {
+				return err
+			}
 		}
 		time.Sleep(1 * time.Second)
 		if time.Since(start) >= 10*time.Second {

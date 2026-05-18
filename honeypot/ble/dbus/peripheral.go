@@ -21,9 +21,16 @@ type peripheralConn struct {
 	device properties
 }
 
+type peripheralProfile struct {
+	service      *prop.Properties
+	ssidChar     *prop.Properties
+	securityChar *prop.Properties
+}
+
 type peripheral struct {
 	blueZ         *blueZ
 	conn          *peripheralConn
+	profile       *peripheralProfile
 	ssidWriteChan chan []byte
 }
 
@@ -40,11 +47,10 @@ func NewPeripheral() (Peripheral, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &peripheral{blueZ, nil, make(chan []byte)}, err
+	return &peripheral{blueZ, nil, nil, nil}, err
 }
 
 func (c *peripheral) Close() error {
-	close(c.ssidWriteChan)
 	return c.blueZ.close()
 }
 
@@ -76,12 +82,12 @@ type objectManager struct {
 func (m *objectManager) addObject(path dbus.ObjectPath, iface string, props map[string]*prop.Prop) {
 	variants := make(map[string]dbus.Variant)
 	for k, v := range props {
-		variants[k] = dbus.MakeVariant(v)
+		variants[k] = dbus.MakeVariant(v.Value)
 	}
 	m.objects[path] = map[string]map[string]dbus.Variant{iface: variants}
 }
 
-func (m *objectManager) addService(props map[string]*prop.Prop) error {
+func (m *objectManager) addService(props map[string]*prop.Prop) (*prop.Properties, error) {
 	conn := m.peripheral.blueZ.conn
 	p, err := prop.Export(
 		conn,
@@ -89,20 +95,20 @@ func (m *objectManager) addService(props map[string]*prop.Prop) error {
 		map[string]map[string]*prop.Prop{charIface: props},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	service := &gattService{p}
 	if err = conn.Export(service, servicePath, serviceIface); err != nil {
-		return err
+		return nil, err
 	}
 	m.addObject(servicePath, serviceIface, props)
-	return nil
+	return p, nil
 }
 
 func (m *objectManager) addChar(
 	props map[string]*prop.Prop,
 	path dbus.ObjectPath,
-	writeChan chan []byte) error {
+	writeChan chan []byte) (*prop.Properties, error) {
 	conn := m.peripheral.blueZ.conn
 	p, err := prop.Export(
 		conn,
@@ -110,25 +116,26 @@ func (m *objectManager) addChar(
 		map[string]map[string]*prop.Prop{charIface: props},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	char := &gattChar{p, writeChan}
 	if err = conn.Export(char, path, charIface); err != nil {
-		return err
+		return nil, err
 	}
 	m.addObject(path, charIface, props)
-	return nil
+	return p, nil
 }
 
 func (m *objectManager) export() error {
-	var err error
-	if err = m.addService(map[string]*prop.Prop{
+	serviceProps, err := m.addService(map[string]*prop.Prop{
 		"UUID":    {Value: serviceUUID},
 		"Primary": {Value: true},
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
-	if err = m.addChar(map[string]*prop.Prop{
+	ssidWriteChan := make(chan []byte)
+	ssidCharProps, err := m.addChar(map[string]*prop.Prop{
 		"UUID":    {Value: ssidCharUUID},
 		"Service": {Value: servicePath},
 		"Flags":   {Value: []string{"write"}},
@@ -137,10 +144,11 @@ func (m *objectManager) export() error {
 			Writable: true,
 			Emit:     prop.EmitTrue,
 		},
-	}, ssidCharPath, m.peripheral.ssidWriteChan); err != nil {
+	}, ssidCharPath, ssidWriteChan)
+	if err != nil {
 		return err
 	}
-	if err = m.addChar(map[string]*prop.Prop{
+	securityCharProps, err := m.addChar(map[string]*prop.Prop{
 		"UUID":    {Value: securityCharUUID},
 		"Service": {Value: servicePath},
 		"Flags":   {Value: []string{"notify"}},
@@ -149,38 +157,59 @@ func (m *objectManager) export() error {
 			Writable: true,
 			Emit:     prop.EmitTrue,
 		},
-	}, securityCharPath, nil); err != nil {
+	}, securityCharPath, nil)
+	if err != nil {
 		return err
 	}
-	return m.peripheral.blueZ.conn.Export(m, managerPath, managerIface)
+	if err = m.peripheral.blueZ.conn.Export(m, managerPath, managerIface); err != nil {
+		return err
+	}
+	m.peripheral.ssidWriteChan = ssidWriteChan
+	m.peripheral.profile = &peripheralProfile{serviceProps, ssidCharProps, securityCharProps}
+	return nil
 }
 
 func (m *objectManager) GetManagedObjects() (managedObjects, *dbus.Error) {
 	return m.objects, nil
 }
 
+func isDBusErr(err error, name string) bool {
+	var dbusErr *dbus.Error
+	return errors.As(err, &dbusErr) && dbusErr.Name == name
+}
+
 func (p *peripheral) registerApplication() error {
 	manager := objectManager{p, make(managedObjects)}
-	var err error
-	if err = manager.export(); err != nil {
-		return err
+	if err := manager.export(); err != nil {
+		return fmt.Errorf("export: %w", err)
 	}
-	err = p.blueZ.adapter.inner.Call(
+	_ = p.blueZ.adapter.inner.Call(
+		"org.bluez.GattManager1.UnregisterApplication",
+		0,
+		managerPath,
+	).Err
+	err := p.blueZ.adapter.inner.Call(
 		"org.bluez.GattManager1.RegisterApplication",
 		0,
 		managerPath,
-		map[string]dbus.Variant(nil),
+		map[string]dbus.Variant{},
 	).Err
-	var dbusErr *dbus.Error
-	if errors.As(err, &dbusErr) && dbusErr.Name == "org.bluez.Error.AlreadyExists" {
+	if err == nil {
 		return nil
 	}
-	return err
+	if isDBusErr(err, "org.bluez.Error.AlreadyExists") {
+		return nil
+	}
+	var dbusErr *dbus.Error
+	if errors.As(err, &dbusErr) {
+		return fmt.Errorf("register (name=%s): %w", dbusErr.Name, err)
+	}
+	return fmt.Errorf("register: %w", err)
 }
 
 func (p *peripheral) registerAdvertisement() error {
 	advProps := map[string]*prop.Prop{
-		"Type":         {Value: "broadcast"},
+		"Type":         {Value: "peripheral"},
 		"ServiceUUIDs": {Value: []string{serviceUUID}},
 		"LocalName":    {Value: deviceName},
 	}
@@ -189,16 +218,16 @@ func (p *peripheral) registerAdvertisement() error {
 		return err
 	}
 	return p.blueZ.adapter.inner.Call(
-		fmt.Sprintf("%s.RegisterAdvertisement", advIface),
+		fmt.Sprintf("%s.RegisterAdvertisement", advManagerIface),
 		0,
 		advPath,
-		map[string]interface{}{},
+		map[string]any{},
 	).Err
 }
 
 func (p *peripheral) unregisterAdvertisement() error {
 	return p.blueZ.adapter.inner.Call(
-		fmt.Sprintf("%s.UnregisterAdvertisement", advIface),
+		fmt.Sprintf("%s.UnregisterAdvertisement", advManagerIface),
 		0,
 		advPath,
 	).Err
@@ -214,10 +243,10 @@ func (p *peripheral) setDiscoverable(discoverable bool) error {
 func (p *peripheral) Connect() error {
 	var err error
 	if err = p.registerApplication(); err != nil {
-		return err
+		return fmt.Errorf("registerApplication: %w", err)
 	}
 	if err = p.registerAdvertisement(); err != nil {
-		return err
+		return fmt.Errorf("registerAdvertisement: %w", err)
 	}
 	defer p.unregisterAdvertisement()
 	objects, done, err := p.blueZ.signalSubscribe()
@@ -274,9 +303,41 @@ func (p *peripheral) Disconnect() error {
 }
 
 func (p *peripheral) WriteSecurity(security Security) error {
-	return nil
+	if p.blueZ.isDisconnected() {
+		return ErrDisconnected
+	}
+	return p.profile.securityChar.Set(
+		charIface,
+		"Value",
+		dbus.MakeVariant(security.bytes()),
+	)
 }
 
 func (p *peripheral) NotifySSID() (chan string, chan struct{}, error) {
-	return nil, nil, nil
+	objects, done, err := p.blueZ.signalSubscribe()
+	if err != nil {
+		return nil, nil, err
+	}
+	ssid := make(chan string)
+	go func() {
+		for {
+			select {
+			case <-done:
+				close(ssid)
+				close(p.ssidWriteChan)
+				p.ssidWriteChan = nil
+				return
+			case o := <-objects:
+				if o.iface == deviceIface && o.props.path == p.conn.device.path {
+					if !o.props.data["Connected"].Value().(bool) {
+						done <- struct{}{}
+						p.blueZ.setDisconnected(true)
+					}
+				}
+			case s := <-p.ssidWriteChan:
+				ssid <- string(s)
+			}
+		}
+	}()
+	return ssid, done, nil
 }

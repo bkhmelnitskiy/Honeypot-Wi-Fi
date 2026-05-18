@@ -127,16 +127,24 @@ func (c *central) Connect() error {
 		if err = obj.call("Connect").Err; err != nil {
 			return err
 		}
+	} else {
+		if err = c.blueZ.adapter.call(
+			"SetDiscoveryFilter",
+			0,
+			map[string]any{"Transport": "le"},
+		).Err; err != nil {
+			return err
+		}
+		if err = c.blueZ.adapter.call("StartDiscovery").Err; err != nil {
+			return err
+		}
+		defer c.blueZ.adapter.call("StopDiscovery")
 	}
 	objects, done, err := c.blueZ.signalSubscribe()
 	if err != nil {
 		return err
 	}
 	defer close(done)
-	if err = c.blueZ.adapter.call("StartDiscovery").Err; err != nil {
-		return err
-	}
-	defer c.blueZ.adapter.call("StopDiscovery")
 	for {
 		o := <-objects
 		if o.iface != deviceIface {
@@ -200,8 +208,15 @@ func (c *central) Disconnect() error {
 }
 
 func (c *central) WriteSSID(ssid string) error {
+	if c.blueZ.isDisconnected() {
+		return ErrDisconnected
+	}
 	obj := c.blueZ.newObject(charIface, c.conn.ssidChar.path)
-	return obj.call("WriteValue", []byte(ssid), map[string]any{"type": "command"}).Err
+	return obj.call(
+		"WriteValue",
+		[]byte(ssid),
+		map[string]any{"type": "command"},
+	).Err
 }
 
 func (c *central) NotifySecurity() (chan Security, chan struct{}, error) {
@@ -220,14 +235,19 @@ func (c *central) NotifySecurity() (chan Security, chan struct{}, error) {
 		for {
 			select {
 			case <-done:
+				close(security)
 				obj.call("StopNotify")
 				return
 			case o := <-objects:
-				if o.iface != charIface || o.props.path != path {
-					continue
-				}
-				if buf, ok := o.props.data["Value"].Value().([]byte); ok {
-					security <- parseSecurity(buf)
+				if o.iface == deviceIface && o.props.path == c.conn.device.path {
+					if !o.props.data["Connected"].Value().(bool) {
+						done <- struct{}{}
+						c.blueZ.setDisconnected(true)
+					}
+				} else if o.iface == charIface && o.props.path == path {
+					if buf, ok := o.props.data["Value"].Value().([]byte); ok {
+						security <- parseSecurity(buf)
+					}
 				}
 			}
 		}

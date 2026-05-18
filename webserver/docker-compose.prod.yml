@@ -81,6 +81,9 @@ services:
       start_period: 10s
 
   postgres:
+    networks:
+      default:
+        ipv4_address: 172.67.0.10
     security_opt:
       - no-new-privileges:true
     deploy:
@@ -118,3 +121,9 @@ services:
       GF_SECURITY_STRICT_TRANSPORT_SECURITY: 'true'
     security_opt:
       - no-new-privileges:true
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.67.0.0/16

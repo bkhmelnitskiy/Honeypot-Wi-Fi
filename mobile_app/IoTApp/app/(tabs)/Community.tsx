@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -6,19 +7,20 @@ type Tile = {
   key: string;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
+  href: string;
 };
 
 const TOP_TILES: Tile[] = [
-  { key: 'page1', label: 'Page 1', icon: 'newspaper-outline' },
-  { key: 'search', label: 'Search', icon: 'search-outline' },
+  { key: 'stats',  label: 'Global stats', icon: 'stats-chart-outline', href: '/community_stats' },
+  { key: 'search', label: 'Search',       icon: 'search-outline',      href: '/community_search' },
 ];
 
 const BOTTOM_TILES: Tile[] = [
-  { key: 'page2', label: 'Page 2', icon: 'document-text-outline' },
-  { key: 'page3', label: 'Page 3', icon: 'chatbubbles-outline' },
+  { key: 'top',    label: 'Top dangerous', icon: 'warning-outline',       href: '/community_top' },
+  { key: 'queue',  label: 'Upload queue',  icon: 'cloud-upload-outline',  href: '/update_queue' },
 ];
 
-function SmallTile({ tile, onPress }: { tile: Tile; onPress?: () => void }) {
+function SmallTile({ tile, onPress }: { tile: Tile; onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.smallTile} onPress={onPress} activeOpacity={0.7}>
       <Ionicons name={tile.icon} size={28} color="#2f95dc" />
@@ -28,30 +30,32 @@ function SmallTile({ tile, onPress }: { tile: Tile; onPress?: () => void }) {
 }
 
 export default function CommunityScreen() {
+  const router = useRouter();
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.container}>
         <Text style={styles.pageTitle}>Community</Text>
 
-        {/* Top row */}
         <View style={styles.row}>
           {TOP_TILES.map((tile) => (
-            <SmallTile key={tile.key} tile={tile} />
+            <SmallTile key={tile.key} tile={tile} onPress={() => router.push(tile.href as any)} />
           ))}
         </View>
 
-        {/* Center: My account */}
         <View style={styles.centerRow}>
-          <TouchableOpacity style={styles.bigTile} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.bigTile}
+            activeOpacity={0.7}
+            onPress={() => router.push('/account')}
+          >
             <Ionicons name="person-circle-outline" size={48} color="#2f95dc" />
             <Text style={styles.bigTileLabel}>My account</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Bottom row */}
         <View style={styles.row}>
           {BOTTOM_TILES.map((tile) => (
-            <SmallTile key={tile.key} tile={tile} />
+            <SmallTile key={tile.key} tile={tile} onPress={() => router.push(tile.href as any)} />
           ))}
         </View>
       </View>
