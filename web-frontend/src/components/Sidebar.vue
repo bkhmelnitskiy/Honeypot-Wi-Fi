@@ -56,12 +56,14 @@ aside {
     transition: all 160ms ease-in;
 }
 
-.icon:hover {
+.icon:hover, .icon:focus{
     //color: var(--contrast-color);
     // filter: drop-shadow( 0px 0px 4px 15px #fff);
     //background-color: var(--main-color);
     transition: all 160ms ease-in;
     filter: drop-shadow( 0px 0px 3px #fff);
+    outline: none;
+    border: none;
 }
 
 // .icon:hover ~ svg.icon {

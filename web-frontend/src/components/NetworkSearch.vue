@@ -49,16 +49,19 @@
         <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
 
         <div class="list">
-            <div v-for="network in networks" :key="network.id" class="list_item">
-                <div>{{ network.ssid }}</div>
-                <div>BSSID: {{ network.bssid }}</div>
-                <div>Last scanned: {{ formatDate(network.last_scanned_at) }}</div>
-                <div>Total scans: {{ network.total_scans }}</div>
-                <div>Top attacks: {{ network.top_attacks?.join(', ') || 'none' }}</div>
-                <div>Average score: {{ network.avg_safety_score }}/100</div>
-                <button @click="showDetails(network)">Details &gt;&gt;</button>
+            <div class="list_bg">
+                <div v-for="network in networks" :key="network.id" class="list_item">
+                    <h3>{{ network.ssid }}</h3>
+                    <div>
+                        <div style="padding-bottom: 2rem;">
+                            <div class="description">Last scanned: {{ formatDate(network.last_scanned_at) }}</div>
+                            <div class="description">Total scans: {{ network.total_scans }}</div>
+                        </div>
+                        <div class="safety_score">Average score: <a v-html="network.avg_safety_score_elem"></a>/100</div>
+                        <button @click="showDetails(network)" style="width: fit-content;">Details &gt;&gt;</button>
+                    </div>
+                </div>
             </div>
-            list placeholder!
         </div>
         
 
@@ -81,7 +84,7 @@ const total = ref(0)
 const nextCursor = ref(null)
 const prevCursor = ref(null)
 const cursor = ref(null)
-const perPage = ref(20)
+const perPage = ref(5)
 
 const search = ref('')
 const bssid = ref('')
@@ -120,6 +123,12 @@ async function loadNetworks() {
         nextCursor.value = response.data.next_cursor
         prevCursor.value = response.data.prev_cursor
         errorMessage.value = ''
+        for (var network in networks.value){
+            if (networks.value[network].avg_safety_score < 33) networks.value[network].avg_safety_score_elem = `<a class="score red">${Math.round(Number(networks.value[network].avg_safety_score))}</a>`;
+            else if (networks.value[network].avg_safety_score < 66) networks.value[network].avg_safety_score_elem = `<a class=\"score yellow\">${Math.round(Number(networks.value[network].avg_safety_score))}</a>`;
+            else networks.value[network].avg_safety_score_elem = `<a class=\"score green\">${Math.round(Number(networks.value[network].avg_safety_score))}</a>`;
+        }
+
     } catch (error) {
         errorMessage.value = 'Failed to load networks'
         console.error(error)
@@ -147,6 +156,7 @@ function showDetails(network) {
 }
 
 onMounted(loadNetworks)
+
 </script>
 
 <style lang="scss">
@@ -305,14 +315,64 @@ onMounted(loadNetworks)
     }
 
     .list{
-        z-index: 2;
+        z-index: 3;
         border-radius: 1rem;
         box-shadow: inset 0px 1px 4px var(--contrast-color);
     }
 
     .list_item{
-        z-index: 1;
+        z-index: 2;
         padding: 1rem;
+        border-radius: 1rem;
+        background-color: var(--main-color);
+        box-shadow: inset 0px 1px 4px var(--contrast-color);
+
+        .description {
+            color: var(--font-light);
+            width: fit-content;
+        }
+
+        .safety_score {
+            width: fit-content;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            margin-bottom: -10px;
+        }
+        
+        button{
+            height: fit-content;
+            position: absolute;
+            bottom: 0;
+        }
+    }
+
+    .list_item>div{
+        position: relative;
+    }
+
+    .list_bg{
+        z-index: 1;
+        border-radius: 1rem;
+        background-color: var(--contrast-color);
+    }
+
+    .score{
+        // add logic to switch colors
+        color: var(--font-dark);
+        font-size: 3rem;
+    }
+
+    .score.red{
+        color: var(--red);
+    }
+
+    .score.yellow{
+        color: var(--yellow);
+    }
+
+    .score.green{
+        color: var(--green);
     }
 }
 
