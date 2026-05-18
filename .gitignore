@@ -48,3 +48,4 @@ web-frontend/__screenshots__/
 
 # Vite
 web-frontend/*.timestamp-*-*.mjs
+webserver/scripts/
