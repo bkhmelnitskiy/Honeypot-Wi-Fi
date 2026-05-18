@@ -82,7 +82,7 @@ type objectManager struct {
 func (m *objectManager) addObject(path dbus.ObjectPath, iface string, props map[string]*prop.Prop) {
 	variants := make(map[string]dbus.Variant)
 	for k, v := range props {
-		variants[k] = dbus.MakeVariant(v)
+		variants[k] = dbus.MakeVariant(v.Value)
 	}
 	m.objects[path] = map[string]map[string]dbus.Variant{iface: variants}
 }
@@ -180,33 +180,36 @@ func isDBusErr(err error, name string) bool {
 
 func (p *peripheral) registerApplication() error {
 	manager := objectManager{p, make(managedObjects)}
-	var err error
-	if err = manager.export(); err != nil {
-		return err
+	if err := manager.export(); err != nil {
+		return fmt.Errorf("export: %w", err)
 	}
-	err = p.blueZ.adapter.inner.Call(
+	_ = p.blueZ.adapter.inner.Call(
 		"org.bluez.GattManager1.UnregisterApplication",
 		0,
 		managerPath,
 	).Err
-	if !isDBusErr(err, "org.bluez.Error.DoesNotExist") {
-		return err
-	}
-	err = p.blueZ.adapter.inner.Call(
+	err := p.blueZ.adapter.inner.Call(
 		"org.bluez.GattManager1.RegisterApplication",
 		0,
 		managerPath,
-		map[string]dbus.Variant(nil),
+		map[string]dbus.Variant{},
 	).Err
-	if !isDBusErr(err, "org.bluez.Error.AlreadyExists") {
-		return err
+	if err == nil {
+		return nil
 	}
-	return nil
+	if isDBusErr(err, "org.bluez.Error.AlreadyExists") {
+		return nil
+	}
+	var dbusErr *dbus.Error
+	if errors.As(err, &dbusErr) {
+		return fmt.Errorf("register (name=%s): %w", dbusErr.Name, err)
+	}
+	return fmt.Errorf("register: %w", err)
 }
 
 func (p *peripheral) registerAdvertisement() error {
 	advProps := map[string]*prop.Prop{
-		"Type":         {Value: "broadcast"},
+		"Type":         {Value: "peripheral"},
 		"ServiceUUIDs": {Value: []string{serviceUUID}},
 		"LocalName":    {Value: deviceName},
 	}
@@ -215,7 +218,7 @@ func (p *peripheral) registerAdvertisement() error {
 		return err
 	}
 	return p.blueZ.adapter.inner.Call(
-		fmt.Sprintf("%s.RegisterAdvertisement", advIface),
+		fmt.Sprintf("%s.RegisterAdvertisement", advManagerIface),
 		0,
 		advPath,
 		map[string]any{},
@@ -224,7 +227,7 @@ func (p *peripheral) registerAdvertisement() error {
 
 func (p *peripheral) unregisterAdvertisement() error {
 	return p.blueZ.adapter.inner.Call(
-		fmt.Sprintf("%s.UnregisterAdvertisement", advIface),
+		fmt.Sprintf("%s.UnregisterAdvertisement", advManagerIface),
 		0,
 		advPath,
 	).Err
@@ -240,10 +243,10 @@ func (p *peripheral) setDiscoverable(discoverable bool) error {
 func (p *peripheral) Connect() error {
 	var err error
 	if err = p.registerApplication(); err != nil {
-		return err
+		return fmt.Errorf("registerApplication: %w", err)
 	}
 	if err = p.registerAdvertisement(); err != nil {
-		return err
+		return fmt.Errorf("registerAdvertisement: %w", err)
 	}
 	defer p.unregisterAdvertisement()
 	objects, done, err := p.blueZ.signalSubscribe()

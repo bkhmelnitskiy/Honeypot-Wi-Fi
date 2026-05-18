@@ -16,6 +16,8 @@ const (
 	serviceIface     = "org.bluez.GattService1"
 	charIface        = "org.bluez.GattCharacteristic1"
 	advIface         = "org.bluez.LEAdvertisement1"
+	advManagerIface  = "org.bluez.LEAdvertisingManager1"
+	gattManagerIface = "org.bluez.GattManager1"
 	deviceIface      = "org.bluez.Device1"
 	adapterIface     = "org.bluez.Adapter1"
 	deviceName       = "honeypot"
