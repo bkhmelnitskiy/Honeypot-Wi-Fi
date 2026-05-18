@@ -29,18 +29,20 @@
                 <input id="min_scans" type="number" v-model.number="minScans" class="form_input" placeholder="" />
                 <label for="min_scans" class="form_label">Min scans</label>
             </div>
-            <select v-model="sort" style="padding-left: 1rem; width: calc(30% - 1rem);">
-                <option value="">Sort by</option>
-                <option value="safety_score">Safety score</option>
-                <option value="total_scans">Total scans</option>
-                <option value="last_scanned_at">Last scanned</option>
-                <option value="ssid">SSID</option>
-            </select>
-            <select v-model="order" style="padding-left: 1rem; width: calc(20% - 0.5rem);">
-                <option value="">Order</option>
-                <option value="asc">Asc</option>
-                <option value="desc">Desc</option>
-            </select>
+            <div class="form_item">
+                <select v-model="sort" style="padding-left: 1rem; width: calc(60% - 0.5rem); margin-right: 1rem;">
+                    <option value="">Sort by</option>
+                    <option value="safety_score">Safety score</option>
+                    <option value="total_scans">Total scans</option>
+                    <option value="last_scanned_at">Last scanned</option>
+                    <option value="ssid">SSID</option>
+                </select>
+                <select v-model="order" style="padding-left: 1rem; width: calc(40% - 0.5rem);">
+                    <option value="">Order</option>
+                    <option value="asc">Asc</option>
+                    <option value="desc">Desc</option>
+                </select>
+            </div>
             <button @click="loadNetworks()">Search</button>
         </form>
 

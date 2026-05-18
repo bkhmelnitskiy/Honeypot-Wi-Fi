@@ -5,7 +5,7 @@
         @back="selectedId = null"
         @done="selectedId = null"
     />
-    <div v-else class="window" style="min-width: 16rem; max-width: 40rem;">
+    <div v-else class="window" style="min-width: 435px; max-width: 40rem;">
         <h2>My uploaded scans</h2>
 
         <div id="scan_search">
@@ -14,7 +14,7 @@
                 <input type="date" v-model="since" style="margin-bottom: 1rem;"/>
                 <label for="search" class="form_label">Search</label>
             </div>
-            <button @click="loadScans()">Filter</button>
+            <button @click="loadScans()" style="margin-bottom: 1rem;">Filter</button>
         </div>
 
         <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
@@ -139,6 +139,10 @@ onMounted(loadScans)
         box-shadow: none;
     }
 
+    button:disabled{
+        background-color: var(--font-light);
+    }
+
     a:link {
         color: var(--contrast-color);
         transition: all 160ms ease-in;
@@ -216,9 +220,7 @@ onMounted(loadScans)
     .error{
         color: var(--red)
     }
-    button:disabled{
-        background-color: var(--font-light);
-    }
+    
     .buttons{
         display: flex;
         justify-content: space-between;

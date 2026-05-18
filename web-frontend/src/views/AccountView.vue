@@ -38,6 +38,27 @@ a {
     color: var(--font-dark);
 }
 
+button {
+    appearance: none;
+    border-width: 0;
+    background-color: var(--contrast-color);
+    padding: 1px 10px 4px 10px;
+    border-radius: 5px;
+    color: var(--main-color);
+    font-size: medium;
+    box-shadow: inset 0 -1px 4px;
+
+    transition: all 100ms ease-in;
+}
+
+button:hover {
+    box-shadow: none;
+}
+
+button:disabled{
+    background-color: var(--font-light);
+}
+
 .window {
     padding: 1rem;
     border-radius: 1rem;
