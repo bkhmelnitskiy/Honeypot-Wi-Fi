@@ -20,6 +20,7 @@
         <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
 
         <div class="list">
+            <div v-if="total == 0" class="list_item" style="display:flex; justify-content: center; color: var(--font-light);">You have not uploaded any scans yet.</div>
             <div v-for="scan in filteredScans" :key="scan.server_scan_id" class="list_item">
                 <div>{{ scan.network.ssid }}</div>
                 <div>BSSID: {{ scan.network.bssid }}</div>
@@ -28,7 +29,6 @@
                 <div>Score: {{ scan.safety_score }}/100</div>
                 <button @click="showDetails(scan)">Details &gt;&gt;</button>
             </div>
-            list placeholder!
         </div>
         
 
