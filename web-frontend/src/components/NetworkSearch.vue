@@ -6,7 +6,7 @@
         @done="selectedId = null"
     />
     <div v-else class="network_details window" style="min-width: 40rem; max-width: 60rem;">
-        <h2>Network search</h2>
+        <h2>Global network search</h2>
 
         <form style="margin-bottom: 1rem;">
             <div class="form_item">
@@ -57,7 +57,13 @@
                             <div class="description">Last scanned: {{ formatDate(network.last_scanned_at) }}</div>
                             <div class="description">Total scans: {{ network.total_scans }}</div>
                         </div>
-                        <div class="safety_score">Average score: <a v-html="network.avg_safety_score_elem"></a>/100</div>
+                        <div class="safety_score">Average score: <a 
+                            class="score"
+                            :class="{
+                                'red': Math.round(network.avg_safety_score) < 34,
+                                'yellow': Math.round(network.avg_safety_score) >= 34 && Math.round(network.avg_safety_score) < 67,
+                                'green': Math.round(network.avg_safety_score) >= 67,
+                            }">{{ Math.round(network.avg_safety_score) }}</a>/100</div>
                         <button @click="showDetails(network)" style="width: fit-content;">Details &gt;&gt;</button>
                     </div>
                 </div>
@@ -123,11 +129,6 @@ async function loadNetworks() {
         nextCursor.value = response.data.next_cursor
         prevCursor.value = response.data.prev_cursor
         errorMessage.value = ''
-        for (var network in networks.value){
-            if (networks.value[network].avg_safety_score < 33) networks.value[network].avg_safety_score_elem = `<a class="score red">${Math.round(Number(networks.value[network].avg_safety_score))}</a>`;
-            else if (networks.value[network].avg_safety_score < 66) networks.value[network].avg_safety_score_elem = `<a class=\"score yellow\">${Math.round(Number(networks.value[network].avg_safety_score))}</a>`;
-            else networks.value[network].avg_safety_score_elem = `<a class=\"score green\">${Math.round(Number(networks.value[network].avg_safety_score))}</a>`;
-        }
 
     } catch (error) {
         errorMessage.value = 'Failed to load networks'
@@ -326,6 +327,7 @@ onMounted(loadNetworks)
         border-radius: 1rem;
         background-color: var(--main-color);
         box-shadow: inset 0px 1px 4px var(--contrast-color);
+        box-sizing: border-box;
 
         .description {
             color: var(--font-light);

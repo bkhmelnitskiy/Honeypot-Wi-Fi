@@ -12,19 +12,32 @@ onMounted(() => stats.fetchGlobalStats())
 <template>
   <main class="home">
     <TotalScans />
-    <Contributors />
+    <div class="contrib">
+      <Contributors/>
+    </div>
     <ScansChart />
   </main>
 </template>
 
 <style lang="scss">
-.home>.window{
+.home > .window{
     padding: 1rem;
     border-radius: 1rem;
     box-shadow: 0 1px 4px var(--contrast-color);
-    min-width: 32rem;
     height: auto;
 }
+
+.contrib{
+  width: calc(50% - 0.5rem);
+  min-width: fit-content;
+  .window{
+    padding: 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 4px var(--contrast-color);
+    height: auto;
+  }
+}
+
 
 main.home{
     display: flex;
