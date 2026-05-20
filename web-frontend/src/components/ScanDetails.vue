@@ -32,8 +32,8 @@
 
             <div>
                 <h3>Test results:</h3>
-                <div class="list" style="min-width: 100%;">
-                    <div class="list_bg" style="max-height: 45rem; overflow-y: auto; pointer-events: auto;">
+                <div class="list_bg" style="min-width: 100%;">
+                    <div class="list" style="max-height: 45rem; overflow-y: auto; pointer-events: auto;">
                         <div v-if="!scan.attacks?.length">No attacks detected</div>
                         <table v-else style="width: 100%;">
                             <span>{{ formatDate(attack.detected_at) }}</span>
@@ -149,9 +149,11 @@ button:disabled{
 .list{
     border-radius: 1rem;
     box-shadow: inset 0px 1px 4px var(--contrast-color);
-    // position: relative;
+    position: relative;
     z-index: auto;
-    pointer-events: none;
+    // pointer-events: none;
+    scrollbar-color: var(--main-color) var(--contrast-color);
+    scrollbar-width: thin;
 }
 
 .list_item{
@@ -161,8 +163,9 @@ button:disabled{
     background-color: var(--main-color);
     box-shadow: inset 0px 1px 4px var(--contrast-color);
     box-sizing: border-box;
-    // position: relative;
+    position: relative;
     pointer-events: auto;
+    
 
     .description {
         color: var(--font-light);
@@ -188,12 +191,11 @@ button:disabled{
 }
 
 .list_bg{
-    z-index: -2;
+    z-index: auto;
+    isolation: isolate;
     border-radius: 1rem;
     background-color: var(--contrast-color);
-    // position: relative;
-    pointer-events: auto;
-    scrollbar-color: var(--main-color) var(--contrast-color);
-    scrollbar-width: thin;
+    position: relative;
+    // pointer-events: auto;
 }
 </style>

@@ -41,6 +41,10 @@ const router = useRouter()
   font-style: normal;
 }
 
+*::selection{
+  background: rgba(120, 202, 233, 0.5);
+}
+
 html,
 body {
   margin: 0;

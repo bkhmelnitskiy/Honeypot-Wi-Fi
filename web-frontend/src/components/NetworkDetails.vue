@@ -48,8 +48,8 @@
 
             <div>
                 <h3 style="margin-top: 1rem; margin-bottom: 0.5rem;">Scan history:</h3>
-                <div class="list" style="min-width: 100%;">
-                    <div class="list_bg" style="max-height: 45rem; overflow-y: auto; pointer-events: auto;">
+                <div class="list_bg" style="min-width: 100%;">
+                    <div class="list" style="max-height: 45rem; overflow-y: auto; pointer-events: auto;">
                         <div v-if="!network.scan_history?.length">No history available</div>
                         <div v-for="(entry, i) in network.scan_history" :key="i" class="list_item">
                             <div class="position">
@@ -110,7 +110,8 @@ watch(() => props.id, loadNetwork)
 </script>
 
 <style lang="scss">
-.window{
+.net_details{
+    .window{
         padding: 1rem;
         border-radius: 1rem;
         box-shadow: 0 1px 4px var(--contrast-color);
@@ -170,9 +171,11 @@ button:disabled{
 .list{
     border-radius: 1rem;
     box-shadow: inset 0px 1px 4px var(--contrast-color);
-    // position: relative;
+    position: relative;
     z-index: auto;
-    pointer-events: none;
+    // pointer-events: none;
+    scrollbar-color: var(--main-color) var(--contrast-color);
+    scrollbar-width: thin;
 }
 
 .list_item{
@@ -182,8 +185,9 @@ button:disabled{
     background-color: var(--main-color);
     box-shadow: inset 0px 1px 4px var(--contrast-color);
     box-sizing: border-box;
-    // position: relative;
+    position: relative;
     pointer-events: auto;
+    
 
     .description {
         color: var(--font-light);
@@ -209,13 +213,13 @@ button:disabled{
 }
 
 .list_bg{
-    z-index: -2;
+    z-index: auto;
+    isolation: isolate;
     border-radius: 1rem;
     background-color: var(--contrast-color);
-    // position: relative;
-    pointer-events: auto;
-    scrollbar-color: var(--main-color) var(--contrast-color);
-    scrollbar-width: thin;
+    position: relative;
+    // pointer-events: auto;
+}
 }
 
 </style>

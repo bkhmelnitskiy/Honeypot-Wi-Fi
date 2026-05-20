@@ -14,7 +14,7 @@ import { useGlobalStatsStore } from '@/stores/globalStats'
 const stats = useGlobalStatsStore()
 
 import { Chart } from "chart.js/auto"
-import { ref, onMounted, Suspense } from 'vue';
+import { ref, onMounted } from 'vue';
 import { errorMessages } from 'vue/compiler-sfc';
 
 const errorMessage = ref('')
@@ -80,7 +80,10 @@ function makeChart(){
     }
 }
 
-onMounted(makeChart)
+onMounted(async () => {
+    await stats.fetchGlobalStats();
+    makeChart();
+})
 </script>
 
 <style lang="scss">
