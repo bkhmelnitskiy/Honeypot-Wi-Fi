@@ -3,11 +3,10 @@ package dbus
 import (
 	"errors"
 	"maps"
-	"slices"
 	"strings"
+	"time"
 
 	"github.com/godbus/dbus/v5"
-	"github.com/google/uuid"
 )
 
 var (
@@ -56,8 +55,7 @@ func (c *central) findService(objs managedObjects, prefix string, id string) (pr
 		if !ok {
 			continue
 		}
-		u, _ := uuid.FromBytes([]byte(data["UUID"].Value().(string)))
-		if u.String() != id {
+		if unquote(data["UUID"].String()) != id {
 			continue
 		}
 		return properties{path, data}, true
@@ -74,131 +72,143 @@ func (c *central) findCharacteristic(objs managedObjects, prefix string, id stri
 		if !ok {
 			continue
 		}
-		u, _ := uuid.FromBytes([]byte(data["UUID"].Value().(string)))
-		if u.String() != id {
+		if unquote(data["UUID"].String()) != id {
 			continue
 		}
 		flags := data["Flags"].Value().([]string)
-		if slices.Contains(flags, flag) {
-			return properties{path, data}, true
-		} else {
-			break
+		for _, f := range flags {
+			if unquote(f) == flag {
+				return properties{path, data}, true
+			}
 		}
+		break
 	}
 	return properties{}, false
 }
 
-func (c *central) newConnection(device properties) (*centralConn, error) {
+func (c *central) newConnection(device properties) error {
 	var objs managedObjects
-	objs, err := c.blueZ.root.getManagedObjects()
-	if err != nil {
-		return nil, err
+	if err := c.blueZ.root.callIface(objectManagerIface, "GetManagedObjects").Store(&objs); err != nil {
+		return err
 	}
 	servicePrefix := string(device.path) + "/service"
 	service, ok := c.findService(objs, servicePrefix, serviceUUID)
 	if !ok {
-		return nil, ErrServiceNotFound
+		return ErrServiceNotFound
 	}
 	charPrefix := string(service.path) + "/char"
 	ssidChar, ok := c.findCharacteristic(objs, charPrefix, ssidCharUUID, "write")
 	if !ok {
-		return nil, ErrCharacteristicNotFound
+		return ErrCharacteristicNotFound
 	}
 	securityChar, ok := c.findCharacteristic(objs, charPrefix, securityCharUUID, "notify")
 	if !ok {
-		return nil, ErrCharacteristicNotFound
+		return ErrCharacteristicNotFound
 	}
-	return &centralConn{device, service, ssidChar, securityChar}, nil
+	c.conn = &centralConn{device, service, ssidChar, securityChar}
+	return nil
 }
 
 func (c *central) Connect() error {
-	honeypots := make(map[dbus.ObjectPath]map[string]dbus.Variant)
-	var pairing, connecting dbus.ObjectPath
-	var paired, connected bool
-	d, ok, err := c.blueZ.findPairedDevice()
+	dev, ok, err := c.blueZ.findPairedDevice()
 	if err != nil {
 		return err
-	}
-	if ok {
-		honeypots[d.path] = d.data
-		paired = true
-		connecting = d.path
-		obj := c.blueZ.newObject(deviceIface, d.path)
-		if err = obj.call("Connect").Err; err != nil {
-			return err
-		}
-	} else {
-		if err = c.blueZ.adapter.call(
-			"SetDiscoveryFilter",
-			0,
-			map[string]any{"Transport": "le"},
-		).Err; err != nil {
-			return err
-		}
-		if err = c.blueZ.adapter.call("StartDiscovery").Err; err != nil {
-			return err
-		}
-		defer c.blueZ.adapter.call("StopDiscovery")
 	}
 	objects, done, err := c.blueZ.signalSubscribe()
 	if err != nil {
 		return err
 	}
 	defer close(done)
+	devs := make(map[dbus.ObjectPath]map[string]dbus.Variant)
+	var paired, connected bool
+	var pairing, connecting dbus.ObjectPath
+	if ok {
+		devs[dev.path] = dev.data
+		paired = true
+		connecting = dev.path
+		obj := c.blueZ.newObject(deviceIface, dev.path)
+		if err = obj.connect(); err != nil {
+			return err
+		}
+	} else {
+		if err = c.blueZ.adapter.call(
+			"SetDiscoveryFilter",
+			map[string]any{"Transport": "le"},
+		).Err; err != nil {
+			return err
+		}
+		defer c.blueZ.adapter.call("SetDiscoveryFilter", map[string]any{})
+		if err = c.blueZ.adapter.call("StartDiscovery").Err; err != nil {
+			return err
+		}
+		defer c.blueZ.adapter.call("StopDiscovery")
+	}
+	start := time.Now()
 	for {
-		o := <-objects
-		if o.iface != deviceIface {
+		if time.Since(start) >= connectTimeout {
+			return ErrConnectTimeout
+		}
+		select {
+		case <-time.After(connectTimeoutCheckInterval):
 			continue
-		}
-		d = o.props
-		if d.data == nil {
-			if d.path != "" {
-				delete(honeypots, d.path)
+		case o := <-objects:
+			if o.iface != deviceIface {
 				continue
+			}
+			dev = o.props
+			if dev.data == nil {
+				delete(devs, dev.path)
+				continue
+			}
+			if _, ok := devs[dev.path]; ok {
+				maps.Copy(devs[dev.path], dev.data)
 			} else {
-				return ErrAdapterStopped
-			}
-		}
-		if _, ok := honeypots[d.path]; ok {
-			maps.Copy(honeypots[d.path], d.data)
-		} else {
-			honeypots[d.path] = d.data
-		}
-		obj := c.blueZ.newObject(deviceIface, d.path)
-		honeypot := honeypots[d.path]
-		if !paired && pairing == "" {
-			pairing = d.path
-			if err = obj.call("Pair").Err; err != nil {
-				return err
-			}
-		} else if pairing == d.path {
-			if honeypot["Paired"].Value().(bool) {
-				paired = true
-				pairing = ""
-			}
-		} else if paired && !connected && connecting == "" {
-			connecting = d.path
-			if err = obj.call("Connect").Err; err != nil {
-				return err
-			}
-		} else {
-			if connecting == d.path {
-				if honeypot["Connected"].Value().(bool) {
-					connected = true
-					connecting = ""
+				if isDeviceName(dev.data) {
+					devs[dev.path] = dev.data
+				} else {
+					continue
 				}
 			}
-			if connected {
-				if honeypot["ServicesResolved"].Value().(bool) {
-					connection, err := c.newConnection(properties{d.path, honeypot})
-					if err != nil {
-						obj.call("Disconnect")
+			obj := c.blueZ.newObject(deviceIface, dev.path)
+			props := devs[dev.path]
+			if !paired {
+				switch pairing {
+				case "":
+					pairing = dev.path
+					if err = obj.pair(); err != nil {
 						return err
 					}
-					c.conn = connection
-					return nil
+				case dev.path:
+					if isPropFlag(props, "Paired") {
+						paired = true
+					}
 				}
 			}
+			if !paired {
+				continue
+			}
+			if !connected {
+				switch connecting {
+				case "":
+					connecting = dev.path
+					if err = obj.connect(); err != nil {
+						return err
+					}
+				case dev.path:
+					if isPropFlag(props, "Connected") {
+						connected = true
+					}
+				}
+			}
+			if !connected || !isPropFlag(props, "ServicesResolved") {
+				continue
+			}
+			time.Sleep(1 * time.Second)
+			if err = c.newConnection(properties{dev.path, props}); err != nil {
+				obj.call("Disconnect")
+				return err
+			}
+			return nil
 		}
 	}
 }
@@ -211,8 +221,7 @@ func (c *central) WriteSSID(ssid string) error {
 	if c.blueZ.isDisconnected() {
 		return ErrDisconnected
 	}
-	obj := c.blueZ.newObject(charIface, c.conn.ssidChar.path)
-	return obj.call(
+	return c.blueZ.newObject(charIface, c.conn.ssidChar.path).call(
 		"WriteValue",
 		[]byte(ssid),
 		map[string]any{"type": "command"},
@@ -226,7 +235,7 @@ func (c *central) NotifySecurity() (chan Security, chan struct{}, error) {
 		return nil, nil, err
 	}
 	obj := c.blueZ.newObject(charIface, path)
-	if err := obj.call("StartNotify").Err; err != nil {
+	if err = obj.call("StartNotify").Err; err != nil {
 		close(done)
 		return nil, nil, err
 	}
@@ -240,7 +249,7 @@ func (c *central) NotifySecurity() (chan Security, chan struct{}, error) {
 				return
 			case o := <-objects:
 				if o.iface == deviceIface && o.props.path == c.conn.device.path {
-					if !o.props.data["Connected"].Value().(bool) {
+					if !isPropFlag(o.props.data, "Connected") {
 						done <- struct{}{}
 						c.blueZ.setDisconnected(true)
 					}
