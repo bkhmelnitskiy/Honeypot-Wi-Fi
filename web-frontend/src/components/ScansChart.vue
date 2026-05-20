@@ -1,5 +1,5 @@
 <template>
-    <div class="window" style="height: min-content; width: 100%; box-sizing: border-box;">
+    <div class="window" style="height: auto; width:100%; box-sizing: border-box;">
         <h1>Scans per day</h1>
         <div class="chart_container" style="position: relative;">
             <canvas id="scans_per_day"></canvas>
@@ -14,7 +14,7 @@ import { useGlobalStatsStore } from '@/stores/globalStats'
 const stats = useGlobalStatsStore()
 
 import { Chart } from "chart.js/auto"
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, Suspense } from 'vue';
 import { errorMessages } from 'vue/compiler-sfc';
 
 const errorMessage = ref('')
@@ -89,7 +89,7 @@ onMounted(makeChart)
     position: relative;
     margin-top: 1.5rem;
     margin-right: 1rem;
-    width: 100%;
+    width: calc(100% - 1rem);
 }
 
 // canvas{

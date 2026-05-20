@@ -11,8 +11,10 @@ onMounted(() => stats.fetchGlobalStats())
 
 <template>
   <main class="home">
-    <TotalScans />
-    <div class="contrib">
+    <div class="half-width" style="margin-right: 1rem;">
+      <TotalScans />
+    </div>
+    <div class="half-width">
       <Contributors/>
     </div>
     <ScansChart />
@@ -27,9 +29,10 @@ onMounted(() => stats.fetchGlobalStats())
     height: auto;
 }
 
-.contrib{
+.half-width{
   width: calc(50% - 0.5rem);
   min-width: fit-content;
+  margin-bottom: 1rem;
   .window{
     padding: 1rem;
     border-radius: 1rem;

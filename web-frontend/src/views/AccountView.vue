@@ -19,8 +19,13 @@
 </script>
 
 <template>
-    <main>
-        <div class="window">
+    <main class="account_info">
+        <div class="window"
+            style="padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 1px 4px var(--contrast-color);
+            min-width: 32rem;
+            height: auto;">
             <h1>Account Information</h1>
             <p>Email: <a>{{ userStore.user?.email }}</a></p>
             <p>Username: <a>{{ userStore.user?.display_name }}</a></p>
@@ -34,6 +39,7 @@
 
 
 <style lang="scss">
+
 p {
     font-size: large;
     color: var(--font-light);
@@ -65,17 +71,10 @@ button:disabled{
     background-color: var(--font-light);
 }
 
-.window {
-    padding: 1rem;
-    border-radius: 1rem;
-    box-shadow: 0 1px 4px var(--contrast-color);
-    min-width: 32rem;
-    height: auto;
-}
-
 main {
     display: flex;
     justify-content: center;
     align-items: center;
 }
+
 </style>

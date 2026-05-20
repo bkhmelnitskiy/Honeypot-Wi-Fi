@@ -1,35 +1,37 @@
 <template>
-    <div id="contributors" class="window" style="height: min-content; min-width: fit-content;">
+    <div id="contributors" class="window" style="height: min-content; min-width: fit-content; width: 100%;">
         <h1>Top contributors</h1>
-        <table style="padding-top: 8px;">
-        <tr v-for="(contributor, index) in stats.globalStats?.top_contributors" :key="contributor.display_name">
-            <td 
-                class="size color"
-                :class="{
-                    'number_1': index === 0,
-                    'number_2': index === 1,
-                    'number_3': index === 2,
-                }"
-                >#{{ index + 1 }}</td>  
-            <td 
-                class="size"
-                :class="{
-                    'number_1': index === 0,
-                    'number_2': index === 1,
-                    'number_3': index === 2,
-                }"
-                >{{ contributor.display_name }}</td>
-            <td 
-                class="size"
-                :class="{
-                    'number_1': index === 0,
-                    'number_2': index === 1,
-                    'number_3': index === 2,
-                }"
-                style="color: var(--font-light);"
-                >{{ contributor.total_scans }} contributions</td>
-        </tr>
-        </table>
+        <div style="display: flex; justify-content: center;">
+            <table style="padding-top: 8px;">
+            <tr v-for="(contributor, index) in stats.globalStats?.top_contributors" :key="contributor.display_name">
+                <td 
+                    class="size color"
+                    :class="{
+                        'number_1': index === 0,
+                        'number_2': index === 1,
+                        'number_3': index === 2,
+                    }"
+                    >#{{ index + 1 }}</td>  
+                <td 
+                    class="size"
+                    :class="{
+                        'number_1': index === 0,
+                        'number_2': index === 1,
+                        'number_3': index === 2,
+                    }"
+                    >{{ contributor.display_name }}</td>
+                <td 
+                    class="size"
+                    :class="{
+                        'number_1': index === 0,
+                        'number_2': index === 1,
+                        'number_3': index === 2,
+                    }"
+                    style="color: var(--font-light);"
+                    >{{ contributor.total_scans }} contributions</td>
+            </tr>
+            </table>
+        </div>
     </div>
 </template>
 // remove the spaces in the template and use CSS

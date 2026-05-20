@@ -5,7 +5,13 @@
         @back="selectedId = null"
         @done="selectedId = null"
     />
-    <div v-else class="window" style="min-width: 435px; max-width: 40rem;">
+    <div v-else class="window" style="
+    min-width: 435px; 
+    max-width: 40rem;
+    box-sizing: border-box;
+    padding: 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 4px var(--contrast-color);">
         <h2>My uploaded scans</h2>
 
         <div id="scan_search">
@@ -201,15 +207,15 @@ onMounted(loadScans)
         width: 100%;
     }
 
-    .window{
-    box-sizing: border-box;
-    width: 100%;//calc(100% - var(--sidebar-icon-width) - 2rem);
-    padding: 1rem;
-    border-radius: 1rem;
-    box-shadow: 0 1px 4px var(--contrast-color);
-    min-width: 30rem;
-    max-width: 60rem;
-    }
+    // .window{
+    // box-sizing: border-box;
+    // width: 100%;//calc(100% - var(--sidebar-icon-width) - 2rem);
+    // padding: 1rem;
+    // border-radius: 1rem;
+    // box-shadow: 0 1px 4px var(--contrast-color);
+    // min-width: 30rem;
+    // max-width: 60rem;
+    // }
 
 
     input[type="date"] {

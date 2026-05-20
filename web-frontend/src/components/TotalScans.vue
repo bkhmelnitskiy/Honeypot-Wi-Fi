@@ -1,5 +1,5 @@
 <template>
-    <div class="window" style="height: min-content; min-width: fit-content; width: calc(50% - 0.5rem);">
+    <div class="window" style="height: min-content; min-width: fit-content; width: 100%; box-sizing: border-box;">
         <h1 style="padding-bottom: 0.75rem;">Global stats</h1>
         <div class="stat">
             <span class="text">Total scans globally:</span>
