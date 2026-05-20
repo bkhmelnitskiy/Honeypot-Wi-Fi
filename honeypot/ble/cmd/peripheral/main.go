@@ -15,26 +15,42 @@ func run() error {
 		return err
 	}
 	defer p.Close()
+	fmt.Println("connecting to central...")
 	if err = p.Connect(); err != nil {
 		return err
 	}
-	defer p.Disconnect()
+	fmt.Println("successfully connected to central")
+	defer func() {
+		fmt.Println("before p.Disconnect()")
+		if err := p.Disconnect(); err != nil {
+			fmt.Println("disconnected from central")
+		}
+		fmt.Println("after p.Disconnect()")
+	}()
 	ssid, done, err := p.NotifySSID()
 	if err != nil {
 		return err
 	}
-	defer close(done)
+	fmt.Println("waiting for ssid notify...")
+	defer func() {
+		fmt.Println("before close(done)")
+		close(done)
+		fmt.Println("after close(done)")
+	}()
 	go func() {
 		for {
 			s := <-ssid
 			if s == "" {
+				fmt.Println("stopped receiving ssid")
 				return
 			}
 			fmt.Printf("received ssid: %s\n", s)
 		}
 	}()
+	fmt.Println("starting writing security...")
 	start := time.Now()
 	for {
+		time.Sleep(1 * time.Second)
 		s := dbus.Security{
 			Level:   dbus.SecurityLevel(rand.Int() % 5),
 			Event:   dbus.SecurityEvent(rand.Int() % 4),
@@ -48,8 +64,8 @@ func run() error {
 				return err
 			}
 		}
-		time.Sleep(1 * time.Second)
 		if time.Since(start) >= 10*time.Second {
+			fmt.Println("stopped writing security")
 			return nil
 		}
 	}

@@ -2,19 +2,21 @@ package dbus
 
 import (
 	"errors"
-	"fmt"
 	"maps"
+	"time"
 
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/prop"
 )
 
 const (
+	advManagerIface  = "org.bluez.LEAdvertisingManager1"
+	gattManagerIface = "org.bluez.GattManager1"
 	managerPath      = dbus.ObjectPath("/honeypot/ble")
 	servicePath      = dbus.ObjectPath("/honeypot/ble/service0")
 	ssidCharPath     = dbus.ObjectPath("/honeypot/ble/service0/char0")
-	securityCharPath = dbus.ObjectPath("/honeypot/ble/service0/char0")
-	advPath          = dbus.ObjectPath("/honeypot/ble/advertisement0")
+	securityCharPath = dbus.ObjectPath("/honeypot/ble/service0/char1")
+	advPath          = dbus.ObjectPath("/honeypot/bluez/advertisement")
 )
 
 type peripheralConn struct {
@@ -47,7 +49,7 @@ func NewPeripheral() (Peripheral, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &peripheral{blueZ, nil, nil, nil}, err
+	return &peripheral{blueZ, nil, nil, make(chan []byte)}, err
 }
 
 func (c *peripheral) Close() error {
@@ -134,7 +136,6 @@ func (m *objectManager) export() error {
 	if err != nil {
 		return err
 	}
-	ssidWriteChan := make(chan []byte)
 	ssidCharProps, err := m.addChar(map[string]*prop.Prop{
 		"UUID":    {Value: ssidCharUUID},
 		"Service": {Value: servicePath},
@@ -144,7 +145,7 @@ func (m *objectManager) export() error {
 			Writable: true,
 			Emit:     prop.EmitTrue,
 		},
-	}, ssidCharPath, ssidWriteChan)
+	}, ssidCharPath, m.peripheral.ssidWriteChan)
 	if err != nil {
 		return err
 	}
@@ -161,10 +162,9 @@ func (m *objectManager) export() error {
 	if err != nil {
 		return err
 	}
-	if err = m.peripheral.blueZ.conn.Export(m, managerPath, managerIface); err != nil {
+	if err = m.peripheral.blueZ.conn.Export(m, managerPath, objectManagerIface); err != nil {
 		return err
 	}
-	m.peripheral.ssidWriteChan = ssidWriteChan
 	m.peripheral.profile = &peripheralProfile{serviceProps, ssidCharProps, securityCharProps}
 	return nil
 }
@@ -174,37 +174,30 @@ func (m *objectManager) GetManagedObjects() (managedObjects, *dbus.Error) {
 }
 
 func isDBusErr(err error, name string) bool {
-	var dbusErr *dbus.Error
+	var dbusErr dbus.Error
 	return errors.As(err, &dbusErr) && dbusErr.Name == name
 }
 
 func (p *peripheral) registerApplication() error {
 	manager := objectManager{p, make(managedObjects)}
-	if err := manager.export(); err != nil {
-		return fmt.Errorf("export: %w", err)
+	var err error
+	if err = manager.export(); err != nil {
+		return err
 	}
-	_ = p.blueZ.adapter.inner.Call(
-		"org.bluez.GattManager1.UnregisterApplication",
-		0,
+	err = p.blueZ.adapter.callIface(gattManagerIface, "UnregisterApplication", managerPath).Err
+	if err != nil && !isDBusErr(err, "org.bluez.Error.DoesNotExist") {
+		return err
+	}
+	err = p.blueZ.adapter.callIface(
+		gattManagerIface,
+		"RegisterApplication",
 		managerPath,
+		map[string]dbus.Variant(nil),
 	).Err
-	err := p.blueZ.adapter.inner.Call(
-		"org.bluez.GattManager1.RegisterApplication",
-		0,
-		managerPath,
-		map[string]dbus.Variant{},
-	).Err
-	if err == nil {
-		return nil
+	if err != nil && !isDBusErr(err, "org.bluez.Error.AlreadyExists") {
+		return err
 	}
-	if isDBusErr(err, "org.bluez.Error.AlreadyExists") {
-		return nil
-	}
-	var dbusErr *dbus.Error
-	if errors.As(err, &dbusErr) {
-		return fmt.Errorf("register (name=%s): %w", dbusErr.Name, err)
-	}
-	return fmt.Errorf("register: %w", err)
+	return nil
 }
 
 func (p *peripheral) registerAdvertisement() error {
@@ -212,89 +205,95 @@ func (p *peripheral) registerAdvertisement() error {
 		"Type":         {Value: "peripheral"},
 		"ServiceUUIDs": {Value: []string{serviceUUID}},
 		"LocalName":    {Value: deviceName},
+		"Timeout":      {Value: uint16(0)},
 	}
 	var err error
-	if _, err = prop.Export(p.blueZ.conn, advPath, map[string]map[string]*prop.Prop{advIface: advProps}); err != nil {
+	if _, err = prop.Export(
+		p.blueZ.conn,
+		advPath,
+		map[string]map[string]*prop.Prop{"org.bluez.LEAdvertisement1": advProps},
+	); err != nil {
 		return err
 	}
-	return p.blueZ.adapter.inner.Call(
-		fmt.Sprintf("%s.RegisterAdvertisement", advManagerIface),
-		0,
+	if err = p.blueZ.adapter.setProperty("Alias", dbus.MakeVariant(deviceName)); err != nil {
+		return err
+	}
+	return p.blueZ.adapter.callIface(
+		advManagerIface,
+		"RegisterAdvertisement",
 		advPath,
 		map[string]any{},
 	).Err
 }
 
-func (p *peripheral) unregisterAdvertisement() error {
-	return p.blueZ.adapter.inner.Call(
-		fmt.Sprintf("%s.UnregisterAdvertisement", advManagerIface),
-		0,
-		advPath,
-	).Err
-}
-
-func (p *peripheral) setDiscoverable(discoverable bool) error {
-	return p.blueZ.adapter.inner.SetProperty(
-		"org.bluez.Adapter1.Discoverable",
-		dbus.MakeVariant(discoverable),
-	)
-}
-
 func (p *peripheral) Connect() error {
 	var err error
-	if err = p.registerApplication(); err != nil {
-		return fmt.Errorf("registerApplication: %w", err)
-	}
 	if err = p.registerAdvertisement(); err != nil {
-		return fmt.Errorf("registerAdvertisement: %w", err)
+		return err
 	}
-	defer p.unregisterAdvertisement()
 	objects, done, err := p.blueZ.signalSubscribe()
 	if err != nil {
 		return err
 	}
 	defer close(done)
-	if err = p.setDiscoverable(true); err != nil {
+	if err = p.blueZ.adapter.setProperty(
+		"DiscoverableTimeout",
+		dbus.MakeVariant(uint32(30)),
+	); err != nil {
 		return err
 	}
-	defer p.setDiscoverable(false)
-	honeypots := make(map[dbus.ObjectPath]map[string]dbus.Variant)
+	if err = p.blueZ.adapter.setProperty(
+		"Discoverable",
+		dbus.MakeVariant(true),
+	); err != nil {
+		return err
+	}
+	if err = p.registerApplication(); err != nil {
+		return err
+	}
+	devs := make(map[dbus.ObjectPath]map[string]dbus.Variant)
+	start := time.Now()
 	for {
-		o := <-objects
-		if o.iface != deviceIface {
-			continue
+		if time.Since(start) >= connectTimeout {
+			return ErrConnectTimeout
 		}
-		d := o.props
-		if d.data == nil {
-			if d.path != "" {
-				delete(honeypots, d.path)
+		select {
+		case <-time.After(connectTimeoutCheckInterval):
+			continue
+		case o := <-objects:
+			if o.iface != deviceIface {
 				continue
-			} else {
-				return ErrAdapterStopped
 			}
+			dev := o.props
+			if dev.data == nil {
+				delete(devs, dev.path)
+				continue
+			}
+			if _, ok := devs[dev.path]; ok {
+				maps.Copy(devs[dev.path], dev.data)
+			} else {
+				devs[dev.path] = dev.data
+			}
+			obj := p.blueZ.newObject(deviceIface, dev.path)
+			if !isPropFlag(devs[dev.path], "Connected") {
+				continue
+			}
+			var props map[string]dbus.Variant
+			if err := obj.callIface(
+				propertiesIface,
+				"GetAll",
+				deviceIface,
+			).Store(&props); err != nil {
+				obj.call("Disconnect")
+				return err
+			}
+			if !isPropFlag(props, "Paired") && !isPropFlag(props, "ServicesResolved") {
+				continue
+			}
+			time.Sleep(1 * time.Second)
+			p.conn = &peripheralConn{properties{dev.path, props}}
+			return nil
 		}
-		if _, ok := honeypots[d.path]; ok {
-			maps.Copy(honeypots[d.path], d.data)
-		} else {
-			honeypots[d.path] = d.data
-		}
-		obj := p.blueZ.newObject(deviceIface, d.path)
-		h := honeypots[d.path]
-		if !h["Connected"].Value().(bool) {
-			continue
-		}
-		var props map[string]dbus.Variant
-		if err := obj.inner.Call(
-			"org.freedesktop.DBus.Properties.GetAll",
-			0,
-			deviceIface,
-		).Store(&props); err != nil {
-			obj.call("Disconnect")
-			return err
-		}
-		maps.Copy(h, props)
-		p.conn = &peripheralConn{properties{d.path, h}}
-		return nil
 	}
 }
 
@@ -306,11 +305,16 @@ func (p *peripheral) WriteSecurity(security Security) error {
 	if p.blueZ.isDisconnected() {
 		return ErrDisconnected
 	}
-	return p.profile.securityChar.Set(
+	err := p.profile.securityChar.Set(
 		charIface,
 		"Value",
 		dbus.MakeVariant(security.bytes()),
 	)
+	if err == nil {
+		return nil
+	} else {
+		return err
+	}
 }
 
 func (p *peripheral) NotifySSID() (chan string, chan struct{}, error) {
@@ -324,12 +328,10 @@ func (p *peripheral) NotifySSID() (chan string, chan struct{}, error) {
 			select {
 			case <-done:
 				close(ssid)
-				close(p.ssidWriteChan)
-				p.ssidWriteChan = nil
 				return
 			case o := <-objects:
 				if o.iface == deviceIface && o.props.path == p.conn.device.path {
-					if !o.props.data["Connected"].Value().(bool) {
+					if !isPropFlag(o.props.data, "Connected") {
 						done <- struct{}{}
 						p.blueZ.setDisconnected(true)
 					}
