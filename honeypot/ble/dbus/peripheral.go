@@ -30,16 +30,18 @@ type peripheralProfile struct {
 }
 
 type peripheral struct {
-	blueZ         *blueZ
-	conn          *peripheralConn
-	profile       *peripheralProfile
-	ssidWriteChan chan []byte
+	blueZ          *blueZ
+	conn           *peripheralConn
+	profile        *peripheralProfile
+	ssidWriteChan  chan []byte
+	notifySSIDDone chan struct{}
 }
 
 type Peripheral interface {
 	Connect() error
 	WriteSecurity(security Security) error
-	NotifySSID() (chan string, chan struct{}, error)
+	StartNotifySSID() (chan string, error)
+	StopNotifySSID()
 	Disconnect() error
 	Close() error
 }
@@ -49,7 +51,7 @@ func NewPeripheral() (Peripheral, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &peripheral{blueZ, nil, nil, make(chan []byte)}, err
+	return &peripheral{blueZ, nil, nil, make(chan []byte), nil}, err
 }
 
 func (c *peripheral) Close() error {
@@ -290,7 +292,7 @@ func (p *peripheral) Connect() error {
 			if !isPropFlag(props, "Paired") && !isPropFlag(props, "ServicesResolved") {
 				continue
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(safetyInterval)
 			p.conn = &peripheralConn{properties{dev.path, props}}
 			return nil
 		}
@@ -317,10 +319,10 @@ func (p *peripheral) WriteSecurity(security Security) error {
 	}
 }
 
-func (p *peripheral) NotifySSID() (chan string, chan struct{}, error) {
+func (p *peripheral) StartNotifySSID() (chan string, error) {
 	objects, done, err := p.blueZ.signalSubscribe()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	ssid := make(chan string)
 	go func() {
@@ -341,5 +343,12 @@ func (p *peripheral) NotifySSID() (chan string, chan struct{}, error) {
 			}
 		}
 	}()
-	return ssid, done, nil
+	time.Sleep(safetyInterval)
+	p.notifySSIDDone = done
+	return ssid, nil
+}
+
+func (p *peripheral) StopNotifySSID() {
+	time.Sleep(safetyInterval)
+	close(p.notifySSIDDone)
 }

@@ -26,29 +26,33 @@ func run() error {
 			fmt.Println("disconnected from peripheral")
 		}
 	}()
-	security, done, err := c.NotifySecurity()
+	security, err := c.StartNotifySecurity()
 	if err != nil {
 		return err
 	}
 	fmt.Println("waiting for security notify...")
-	defer close(done)
+	defer c.StopNotifySecurity()
 	go func() {
+		i := 0
 		for {
 			s := <-security
 			if reflect.ValueOf(s).IsZero() {
 				fmt.Println("stopped receiving security")
 				return
 			}
-			fmt.Printf("received security: %d, %d, %d\n", s.Event, s.Level, s.Seconds)
+			i++
+			fmt.Printf("[P%d] received security: %d, %d, %d\n", i, s.Event, s.Level, s.Seconds)
 		}
 	}()
 	fmt.Println("starting writing ssid...")
 	start := time.Now()
+	i := 0
 	for {
 		time.Sleep(1 * time.Second)
-		i := rand.Int() % 50
-		s := fmt.Sprintf("mysuperwifi%d", i)
-		fmt.Printf("writing ssid: %s\n", s)
+		i++
+		k := rand.Int() % 50
+		s := fmt.Sprintf("mysuperwifi%d", k)
+		fmt.Printf("[C%d] writing ssid: %s\n", i, s)
 		if err = c.WriteSSID(s); err != nil {
 			if err == dbus.ErrDisconnected {
 				return nil

@@ -22,14 +22,16 @@ type centralConn struct {
 }
 
 type central struct {
-	blueZ *blueZ
-	conn  *centralConn
+	blueZ              *blueZ
+	conn               *centralConn
+	notifySecurityDone chan struct{}
 }
 
 type Central interface {
 	Connect() error
 	WriteSSID(ssid string) error
-	NotifySecurity() (chan Security, chan struct{}, error)
+	StartNotifySecurity() (chan Security, error)
+	StopNotifySecurity()
 	Disconnect() error
 	Close() error
 }
@@ -39,7 +41,7 @@ func NewCentral() (Central, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &central{blueZ, nil}, err
+	return &central{blueZ, nil, nil}, err
 }
 
 func (c *central) Close() error {
@@ -203,7 +205,7 @@ func (c *central) Connect() error {
 			if !connected || !isPropFlag(props, "ServicesResolved") {
 				continue
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(safetyInterval)
 			if err = c.newConnection(properties{dev.path, props}); err != nil {
 				obj.call("Disconnect")
 				return err
@@ -228,16 +230,16 @@ func (c *central) WriteSSID(ssid string) error {
 	).Err
 }
 
-func (c *central) NotifySecurity() (chan Security, chan struct{}, error) {
+func (c *central) StartNotifySecurity() (chan Security, error) {
 	path := c.conn.securityChar.path
 	objects, done, err := c.blueZ.signalSubscribe()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	obj := c.blueZ.newObject(charIface, path)
 	if err = obj.call("StartNotify").Err; err != nil {
 		close(done)
-		return nil, nil, err
+		return nil, err
 	}
 	security := make(chan Security)
 	go func() {
@@ -261,5 +263,12 @@ func (c *central) NotifySecurity() (chan Security, chan struct{}, error) {
 			}
 		}
 	}()
-	return security, done, nil
+	time.Sleep(safetyInterval)
+	c.notifySecurityDone = done
+	return security, nil
+}
+
+func (c *central) StopNotifySecurity() {
+	time.Sleep(safetyInterval)
+	close(c.notifySecurityDone)
 }

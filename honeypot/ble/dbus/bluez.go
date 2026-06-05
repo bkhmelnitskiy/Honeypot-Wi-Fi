@@ -24,10 +24,11 @@ const (
 	ssidCharUUID                = "60d1e593-768b-4a61-b0b4-503c32a09364"
 	securityCharUUID            = "10a1e240-345e-437e-befd-1641c768fb93"
 	agentPath                   = dbus.ObjectPath("/honeypot/bluez/agent")
-	connectTimeout              = 10 * time.Second
-	connectTimeoutCheckInterval = 1 * time.Second
-	connectDBusTimeout          = 4 * time.Second
-	pairDBusTimeout             = 6 * time.Second
+	connectTimeout              = 30 * time.Second
+	connectTimeoutCheckInterval = 3 * time.Second
+	connectDBusTimeout          = 15 * time.Second
+	pairDBusTimeout             = 15 * time.Second
+	safetyInterval              = 3 * time.Second
 )
 
 var (
@@ -209,7 +210,7 @@ type signalObject struct {
 }
 
 func (b *blueZ) signalSubscribe() (chan signalObject, chan struct{}, error) {
-	signal := make(chan *dbus.Signal, 32)
+	signal := make(chan *dbus.Signal, 64)
 	b.conn.Signal(signal)
 	var err error
 	if err = b.conn.AddMatchSignal(b.signalMatchPropertiesChanged...); err != nil {
@@ -322,9 +323,13 @@ func (b *blueZ) disconnect(path dbus.ObjectPath) error {
 		return nil
 	}
 	defer b.setDisconnected(true)
+	objects, done, err := b.signalSubscribe()
+	if err != nil {
+		return err
+	}
+	defer close(done)
 	obj := b.newObject(deviceIface, path)
 	var connected bool
-	var err error
 	if err = obj.getProperty("Connected", &connected); err != nil {
 		return err
 	}
@@ -334,17 +339,12 @@ func (b *blueZ) disconnect(path dbus.ObjectPath) error {
 	if err = obj.call("Disconnect").Err; err != nil {
 		return err
 	}
-	objects, done, err := b.signalSubscribe()
-	if err != nil {
-		return err
-	}
 	for {
 		o := <-objects
 		if o.iface != deviceIface || o.props.path != path {
 			continue
 		}
 		if !isPropFlag(o.props.data, "Connected") {
-			close(done)
 			return nil
 		}
 	}
