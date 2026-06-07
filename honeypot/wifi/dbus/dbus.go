@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	serviceName    = "fi.w1.wpa_supplicant1"
-	servicePath    = "/fi/w1/wpa_supplicant1"
-	timeoutScan    = 10 * time.Second
-	timeoutConnect = 10 * time.Second
+	serviceName                 = "fi.w1.wpa_supplicant1"
+	servicePath                 = "/fi/w1/wpa_supplicant1"
+	timeoutScan                 = 10 * time.Second
+	timeoutConnect              = 10 * time.Second
+	timeoutConnectCheckInterval = 1 * time.Second
 )
 
 var (
@@ -28,6 +29,7 @@ var (
 	ErrInvalidNetworkConfig = errors.New("dbus: network configuration is invalid")
 	ErrNotFound             = errors.New("dbus: interface not found")
 	ErrTimeout              = errors.New("dbus: operation took too long to complete")
+	ErrConnectFailure       = errors.New("dbus: connection attempt failed")
 )
 
 type WPA struct {
@@ -384,8 +386,11 @@ func (c *Conn) ConnectNetwork(interfaceID int, config map[string]any) error {
 	if state == "completed" {
 		return ErrAlreadyConnected
 	}
-	if state != "disconnected" && state != "inactive" {
+	if state != "disconnected" && state != "inactive" && state != "scanning" {
 		return ErrAlreadyConnecting
+	}
+	if state == "scanning" {
+		obj.call("Disconnect")
 	}
 	if err = obj.call("RemoveAllNetworks").Err; err != nil {
 		return err
@@ -396,7 +401,7 @@ func (c *Conn) ConnectNetwork(interfaceID int, config map[string]any) error {
 	}
 	call := obj.call("AddNetwork", args)
 	if err = call.Err; err != nil {
-		if isError(err, "InvalidArgs") {
+		if isError(err, "InvalidArgs") || err.Error() == "invalid message format" {
 			return ErrInvalidNetworkConfig
 		} else {
 			return err
@@ -404,11 +409,14 @@ func (c *Conn) ConnectNetwork(interfaceID int, config map[string]any) error {
 	}
 	path := call.Body[0].(dbus.ObjectPath)
 	if err = obj.call("SelectNetwork", path).Err; err != nil {
+		obj.call("RemoveNetwork", path)
 		return err
 	}
 	sub := c.newSubscriber(obj, "PropertiesChanged")
 	ch, err := sub.subscribe()
 	if err != nil {
+		obj.call("Disconnect")
+		obj.call("RemoveNetwork", path)
 		if errors.Is(err, errAlreadySubscribed) {
 			return ErrAlreadyConnecting
 		} else {
@@ -416,17 +424,37 @@ func (c *Conn) ConnectNetwork(interfaceID int, config map[string]any) error {
 		}
 	}
 	defer sub.unsubscribe()
-	enquoted := fmt.Sprintf("%q", "completed")
+	start := time.Now()
+	associating := false
 	for {
 		select {
 		case sig := <-ch:
 			properties := sig.Body[0].(map[string]dbus.Variant)
 			s, ok := properties["State"]
-			if ok && s.String() == enquoted {
-				return nil
+			if !ok {
+				continue
 			}
-		case <-time.After(timeoutConnect):
-			return ErrTimeout
+			state, _ = strconv.Unquote(s.String())
+			switch state {
+			case "associating":
+				associating = true
+			case "completed":
+				return nil
+			case "scanning":
+				if associating {
+					obj.call("Disconnect")
+					return ErrConnectFailure
+				}
+			case "disconnected":
+				if associating {
+					return ErrConnectFailure
+				}
+			}
+		case <-time.After(timeoutConnectCheckInterval):
+			if time.Since(start) >= timeoutConnect {
+				obj.call("Disconnect")
+				return ErrTimeout
+			}
 		}
 	}
 }
