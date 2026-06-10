@@ -66,7 +66,7 @@
                                             'yellow': attack.severity === 'MEDIUM',
                                             'green': attack.severity === 'LOW'
                                         }">{{ attack.severity }}</td>
-                                        <td style="text-align: right; padding: 0;">confidence: {{ attack.confidence }}</td>
+                                        <td style="text-align: right; padding: 0;">confidence: {{ Math.round(attack.confidence) }}</td>
                                     </tr>
                                 </table>
                             </div>
