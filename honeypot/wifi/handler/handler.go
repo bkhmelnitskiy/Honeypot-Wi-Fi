@@ -134,7 +134,7 @@ func (h *Handler) ConnectNetwork(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		} else if errors.Is(err, dbus.ErrAlreadyConnected) || errors.Is(err, dbus.ErrAlreadyConnecting) {
 			w.WriteHeader(http.StatusConflict)
-		} else if errors.Is(err, dbus.ErrInvalidNetworkConfig) {
+		} else if errors.Is(err, dbus.ErrInvalidNetworkConfig) || errors.Is(err, dbus.ErrConnectFailure) {
 			w.WriteHeader(http.StatusBadRequest)
 		} else if errors.Is(err, dbus.ErrTimeout) {
 			w.WriteHeader(http.StatusGatewayTimeout)

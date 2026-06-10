@@ -121,7 +121,7 @@ GET /interface/1/network
 - Response body is empty.
 - When an interface with the particular ID does not exist, status `404 Not Found` is returned.
 - When the connection is already established or is currently being established on this interface, status `409 Conflict` is returned.
-- When invalid network configuration has been provided, status `400 Bad Request` is returned.
+- When invalid network configuration has been provided or connection attempt has failed, status `400 Bad Request` is returned.
 
 ##### Example
 
