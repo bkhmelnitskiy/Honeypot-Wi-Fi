@@ -1,5 +1,5 @@
 <template>
-    <div id="contributors" class="window" style="height: min-content; min-width: fit-content; width: 100%;">
+    <div id="contributors" class="window" style="height: min-content; min-width: 38rem; width: 100%; max-width: 45rem;">
         <h1>Top contributors</h1>
         <div style="display: flex; justify-content: center;">
             <table style="padding-top: 8px;">

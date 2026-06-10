@@ -1,6 +1,6 @@
 <template>
     <main>
-        <div>
+        <div class="login">
             <LoginForm v-if="mode === 'login'" @switch="handleSwitch" />
             <RegisterForm v-else @switch="handleSwitch" />
         </div>
@@ -22,6 +22,7 @@ function handleSwitch(message = '') {
 </script>
 
 <style lang="scss">
+.login{
 input {
     box-sizing: border-box;
     appearance: none;
@@ -131,7 +132,7 @@ form {
   min-width: 16rem;
   max-width: 32rem;
 }
-
+}
 main{
     display: flex;
     justify-content: center;

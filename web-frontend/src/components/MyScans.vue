@@ -5,8 +5,8 @@
         @back="selectedId = null"
         @done="selectedId = null"
     />
-    <div v-else class="window" style="
-    min-width: 435px; 
+    <div v-else class="window myscans" style="
+    min-width: 35rem; 
     max-width: 40rem;
     box-sizing: border-box;
     padding: 1rem;
@@ -25,15 +25,26 @@
 
         <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
 
-        <div class="list">
-            <div v-if="total == 0" class="list_item" style="display:flex; justify-content: center; color: var(--font-light);">You have not uploaded any scans yet.</div>
-            <div v-for="scan in filteredScans" :key="scan.server_scan_id" class="list_item">
-                <div>{{ scan.network.ssid }}</div>
-                <div>BSSID: {{ scan.network.bssid }}</div>
-                <div>Scan date: {{ formatDate(scan.started_at) }}</div>
-                <div>Upload status: {{ scan.server_scan_id ? 'uploaded' : 'not uploaded' }}</div>
-                <div>Score: {{ scan.safety_score }}/100</div>
-                <button @click="showDetails(scan)">Details &gt;&gt;</button>
+        <div class="list_bg" style="min-width: 100%;">
+            <div class="list" style="max-height: 45rem; overflow-y: auto;">
+                <div v-if="total == 0" class="list_item" style="display:flex; justify-content: center; color: var(--font-light);">You have not uploaded any scans yet.</div>
+                <div v-for="scan in filteredScans" :key="scan.server_scan_id" class="list_item">
+                    <div class="title">{{ scan.network.ssid }}</div>
+                    <div style="padding-bottom: 2rem;">
+                        <div class="description">BSSID: {{ scan.network.bssid }}</div>
+                        <div class="description">Scan date: {{ formatDate(scan.started_at) }}</div>
+                        <div class="description">Upload status: {{ scan.server_scan_id ? 'uploaded' : 'not uploaded' }}</div>
+                        <div class="safety_score">Score: <a 
+                            class="score"
+                            :class="{
+                                'red': scan.safety_score < 34,
+                                'yellow': scan.safety_score >= 34 && scan.safety_score < 67,
+                                'green': scan.safety_score >= 67,
+                            }">{{ scan.safety_score }}</a>/100</div>
+                        <button @click="showDetails(scan)">Details &gt;&gt;</button>
+                    </div>
+                    
+                </div>
             </div>
         </div>
         
@@ -114,6 +125,7 @@ onMounted(loadScans)
 </script>
 
 <style lang="scss">
+.myscans{
     input {
     box-sizing: border-box;
     appearance: none;
@@ -226,7 +238,25 @@ onMounted(loadScans)
     .error{
         color: var(--red)
     }
-    
+
+    .score{
+        // add logic to switch colors
+        color: var(--font-dark);
+        font-size: 2rem;
+    }
+
+    .red{
+        color: var(--red);
+    }
+
+    .yellow{
+        color: var(--yellow);
+    }
+
+    .green{
+        color: var(--green);
+    }
+        
     .buttons{
         display: flex;
         justify-content: space-between;
@@ -236,14 +266,68 @@ onMounted(loadScans)
         color: var(--font-light);
     }
 
-    .list{
-        z-index: 2;
-        border-radius: 1rem;
-        box-shadow: inset 0px 1px 4px var(--contrast-color);
+.list{
+    border-radius: 1rem;
+    box-shadow: inset 0px 1px 4px var(--contrast-color);
+    position: relative;
+    z-index: auto;
+    // pointer-events: none;
+    scrollbar-color: var(--main-color) var(--contrast-color);
+    scrollbar-width: thin;
+    pointer-events: none;
+}
+
+.list_item{
+    z-index: -1;
+    padding: 1rem;
+    border-radius: 1rem;
+    background-color: var(--main-color);
+    box-shadow: inset 0px 1px 4px var(--contrast-color);
+    box-sizing: border-box;
+    position: relative;
+    pointer-events: auto;
+    
+
+    .description {
+        color: var(--font-light);
+        width: fit-content;
     }
 
-    .list_item{
-        z-index: 1;
-        padding: 1rem;
+    .safety_score {
+        width: fit-content;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        margin-bottom: -8px;
     }
+    
+    button{
+        height: fit-content;
+        position: absolute;
+        bottom: 0;
+    }
+}
+
+.list_item>div{
+    position: relative;
+}
+
+.list_bg{
+    z-index: auto;
+    isolation: isolate;
+    border-radius: 1rem;
+    background-color: var(--contrast-color);
+    position: relative;
+    // pointer-events: auto;
+}
+
+.title{
+    color: var(--font-dark);
+    font-size: large;
+}
+
+.description{
+    color: var(--font-light);
+}
+}
 </style>

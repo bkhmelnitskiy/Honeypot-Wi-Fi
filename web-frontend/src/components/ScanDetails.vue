@@ -1,6 +1,6 @@
 <template>
-    <div class="window" style="min-width: fit-content; box-sizing: border-box;">
-        <h2>Scan details</h2>
+    <div class="window scandetails" style="min-width: fit-content; box-sizing: border-box;">
+        <h2 style="margin-bottom: .5rem;">Scan details</h2>
 
         <div v-if="errorMessage">{{ errorMessage }}</div>
 
@@ -31,33 +31,38 @@
             </div>
 
             <div>
-                <h3>Test results:</h3>
+                <h3 style="margin-top: .5rem;">Test results:</h3>
                 <div class="list_bg" style="min-width: 100%;">
                     <div class="list" style="max-height: 45rem; overflow-y: auto; pointer-events: auto;">
-                        <div v-if="!scan.attacks?.length">No attacks detected</div>
-                        <table v-else style="width: 100%;">
-                            <span>{{ formatDate(attack.detected_at) }}</span>
+                        <div v-if="!scan.attacks?.length" class="list_item"><a class="description">No attacks detected</a></div>
+                        <div v-else class="list_item">
                             <tr v-for="(attack, i) in scan.attacks" :key="i">
+                                <span>{{ formatDate(attack.started_at) }}</span>
                                 <td style="text-align: left; padding: 0;">{{ attack.attack_type }}</td>
-                                <td style="text-align: center; padding: 0;" :class="{
+                                <td style="text-align: center; padding: 0 .5rem;" :class="{
                                     'red': attack.severity === 'CRITICAL' || attack.severity === 'HIGH',
                                     'yellow': attack.severity === 'MEDIUM',
                                     'green': attack.severity === 'LOW'
                                     }">{{ attack.severity }}</td>
                                 <td style="text-align: right; padding: 0;">confidence: {{ attack.confidence }}</td>
                             </tr>
-                        </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div>
-                <label>Security score:</label>
-                <span>{{ scan.safety_score }}/100</span>
+            
+            <div class="buttons">
+                <button @click="emit('back')">Back</button>
+                <div class="safety_score">Safety score: <a 
+                class="score"
+                :class="{
+                    'red': scan.safety_score < 34,
+                    'yellow': scan.safety_score >= 34 && scan.safety_score < 67,
+                    'green': scan.safety_score >= 67,
+                }">{{ scan.safety_score }}</a>/100</div>
+                <button @click="emit('done')">Done</button>
             </div>
-
-            <button @click="emit('back')">Back</button>
-            <button @click="emit('done')">Done</button>
         </div>
     </div>
 </template>
@@ -78,6 +83,7 @@ async function loadScan() {
     try {
         const response = await axios.get(`/api/v1/scans/${props.id}`, { withCredentials: true })
         scan.value = response.data
+        console.log(scan);
         errorMessage.value = ''
     } catch (error) {
         errorMessage.value = 'Failed to load scan details'
@@ -95,6 +101,7 @@ watch(() => props.id, loadScan)
 
 
 <style lang="scss">
+.scandetails{
 .position{
     display: flex;
     justify-content: space-between;
@@ -102,6 +109,17 @@ watch(() => props.id, loadScan)
     label{
         color: var(--font-light);
     }
+}
+
+.safety_score{
+    margin: 0 1rem;
+    text-align: center;
+}
+
+.score{
+    // add logic to switch colors
+    color: var(--font-dark);
+    font-size: 1.25rem;
 }
 
 .red{
@@ -126,6 +144,7 @@ button {
     font-size: medium;
     box-shadow: inset 0 -1px 4px;
     transition: all 100ms ease-in;
+    height: fit-content;
 }
 
 button:hover {
@@ -140,6 +159,7 @@ button:disabled{
     display: flex;
     justify-content: space-between;
     padding-top: 1rem;
+    align-content: center;
 }
 
 .error{
@@ -197,5 +217,6 @@ button:disabled{
     background-color: var(--contrast-color);
     position: relative;
     // pointer-events: auto;
+}
 }
 </style>

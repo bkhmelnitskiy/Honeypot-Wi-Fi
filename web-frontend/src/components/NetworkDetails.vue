@@ -50,7 +50,7 @@
                 <h3 style="margin-top: 1rem; margin-bottom: 0.5rem;">Scan history:</h3>
                 <div class="list_bg" style="min-width: 100%;">
                     <div class="list" style="max-height: 45rem; overflow-y: auto; pointer-events: auto;">
-                        <div v-if="!network.scan_history?.length">No history available</div>
+                        <div v-if="!network.scan_history?.length" class="list_item"><a class="description">No history available</a></div>
                         <div v-for="(entry, i) in network.scan_history" :key="i" class="list_item">
                             <div class="position">
                                 <span>{{ entry.date }}</span>

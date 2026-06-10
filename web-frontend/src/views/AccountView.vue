@@ -25,6 +25,7 @@
             border-radius: 1rem;
             box-shadow: 0 1px 4px var(--contrast-color);
             min-width: 32rem;
+            max-width: 32rem;
             height: auto;">
             <h1>Account Information</h1>
             <p>Email: <a>{{ userStore.user?.email }}</a></p>
