@@ -20,6 +20,7 @@ export async function runScan(
   callbacks: RunScanCallbacks = {},
 ): Promise<{ localScanId: number; result: ScanResult }> {
   const { scan_id } = await honeypot.startScan(req);
+  console.log(scan_id)
 
   const result = await new Promise<ScanResult>((resolve, reject) => {
     const unsubscribe = honeypot.onStatusUpdate(async (u) => {
@@ -34,13 +35,18 @@ export async function runScan(
       if (u.state === 'COMPLETED') {
         unsubscribe();
         try {
+          console.log("runScan w COMPLETED początek")
           const r = await honeypot.getResult(scan_id);
           resolve(r);
+          console.log("runScan w COMPLETED koniec")
         } catch (err) {
+          console.log("runScan w COMPLETED catch")
           reject(err);
+          console.log("runScan w COMPLETED catch end")
         }
       } else if (u.state === 'ERROR') {
         unsubscribe();
+        honeypot.stopScan(scan_id);
         reject(new Error(u.message ?? 'Scan failed'));
       }
     });
@@ -56,6 +62,8 @@ export function persistScan(result: ScanResult): number {
   const id = insertScan({
     client_scan_id: result.client_scan_id,
     network: result.network.ssid,
+    network_id: result.network.bssid,
+    channel: result.network.channel,
     safety_score: result.safety_score,
     scan_duration_sec: result.scan_duration_sec,
     attacks: result.attacks as Attack[],

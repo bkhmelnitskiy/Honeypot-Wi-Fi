@@ -11,6 +11,7 @@
 // is installed; the rest of the app keeps the same interface.
 
 import type { Attack } from '@/constants/db';
+import { getScanPrefs, type ScanPrefs } from '@/services/preferences';
 
 export type HoneypotState =
   | 'DISCONNECTED'
@@ -55,7 +56,7 @@ export type AvailableNetwork = {
   ssid: string;
   bssid: string;
   channel: number;
-  signal_dbm: number;
+  // signal_dbm: number; // TODO do wywalenia
   encryption: string;
   frequency_mhz: number;
 };
@@ -94,9 +95,12 @@ export type ScanResult = {
 export type StartScanRequest = {
   ssid: string;
   bssid: string;
+  channel: number;
+  encryption_type: string,
   password?: string | null;
   duration_sec?: number;
   modules?: string[];
+  frequency_mhz: number;
 };
 
 export interface HoneypotTransport {
@@ -108,9 +112,9 @@ export interface HoneypotTransport {
   connect(deviceId: string): Promise<void>;
   disconnect(): Promise<void>;
 
-  ping(): Promise<DeviceStatus>;
-  getDeviceInfo(): Promise<DeviceInfo>;
-  listNetworks(scan_duration_sec?: number): Promise<AvailableNetwork[]>;
+  ping(): Promise<DeviceStatus | null>;
+  getDeviceInfo(): Promise<DeviceInfo | null>;
+  listNetworks(): Promise<AvailableNetwork[] | null>;
 
   startScan(req: StartScanRequest): Promise<{ scan_id: string; estimated_duration_sec: number }>;
   stopScan(scan_id: string): Promise<void>;
@@ -119,13 +123,23 @@ export interface HoneypotTransport {
   onStatusUpdate(listener: (u: StatusUpdate) => void): () => void;
 }
 
+const statusToPct: Record<ScanState, number> = {
+  'INITIALIZING': 0,
+  'CONNECTING': 10,
+  'CONNECTED': 30,
+  'SCANNING': 60,
+  'ANALYZING': 80,
+  'COMPLETED': 100,
+  'ERROR': -100,
+};
+
 // -------- Mock transport --------
 
 const MOCK_NETWORKS: AvailableNetwork[] = [
-  { ssid: 'FreeWiFi',    bssid: 'AA:BB:CC:DD:EE:01', channel: 6,  signal_dbm: -52, encryption: 'OPEN',     frequency_mhz: 2437 },
-  { ssid: 'CoffeeHouse', bssid: 'AA:BB:CC:DD:EE:02', channel: 11, signal_dbm: -64, encryption: 'WPA2-PSK', frequency_mhz: 2462 },
-  { ssid: 'Airport_Free',bssid: 'AA:BB:CC:DD:EE:03', channel: 1,  signal_dbm: -71, encryption: 'OPEN',     frequency_mhz: 2412 },
-  { ssid: 'guest',       bssid: 'AA:BB:CC:DD:EE:04', channel: 36, signal_dbm: -58, encryption: 'WPA2-PSK', frequency_mhz: 5180 },
+  { ssid: 'FreeWiFi', bssid: 'AA:BB:CC:DD:EE:01', channel: 6, encryption: 'OPEN', frequency_mhz: 2437 },
+  { ssid: 'CoffeeHouse', bssid: 'AA:BB:CC:DD:EE:02', channel: 11, encryption: 'WPA2-PSK', frequency_mhz: 2462 },
+  { ssid: 'Airport_Free', bssid: 'AA:BB:CC:DD:EE:03', channel: 1, encryption: 'OPEN', frequency_mhz: 2412 },
+  { ssid: 'guest', bssid: 'AA:BB:CC:DD:EE:04', channel: 36, encryption: 'WPA2-PSK', frequency_mhz: 5180 },
 ];
 
 class MockHoneypotTransport implements HoneypotTransport {
@@ -178,74 +192,107 @@ class MockHoneypotTransport implements HoneypotTransport {
     this.setState('DISCONNECTED');
   }
 
-  async ping(): Promise<DeviceStatus> {
-    return {
-      status: 'OK',
-      battery_pct: 78,
-      firmware: '1.2.0',
-      uptime_sec: 3600,
-      wlan0_state: this.activeScan ? 'CONNECTED' : 'IDLE',
-      wlan1_state: this.activeScan ? 'MONITOR' : 'IDLE',
-      active_scan: this.activeScan
-        ? {
-            scan_id: this.activeScan.scan_id,
-            state: 'SCANNING',
-            progress_pct: this.computeProgressPct(),
-          }
-        : null,
-      pending_results: this.completedResults.map((r) => r.client_scan_id),
-    };
+  async ping(): Promise<DeviceStatus | null> {
+    try {
+      const res = await fetch("http://192.168.200.1:5000/device_status");
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      // console.error(err);
+      return null;
+    }
   }
 
-  async getDeviceInfo(): Promise<DeviceInfo> {
-    return {
-      device_id: 'rpi-serial-mock',
-      firmware_version: '1.2.0',
-      hardware_model: 'RPi 4 (mock)',
-      wlan0_mac: 'AA:BB:CC:00:11:22',
-      wlan1_mac: 'AA:BB:CC:00:11:33',
-      battery_pct: 78,
-      storage_free_mb: 2137,
-      total_scans_performed: 46,
-    };
+  async getDeviceInfo(): Promise<DeviceInfo | null> {
+    try {
+      const res = await fetch("http://192.168.200.1:5000/device_info");
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      // console.error(err);
+      return null;
+    }
   }
 
-  async listNetworks(scan_duration_sec = 5): Promise<AvailableNetwork[]> {
-    await delay(Math.min(scan_duration_sec, 3) * 300);
-    return MOCK_NETWORKS;
+  async listNetworks(): Promise<AvailableNetwork[] | null> {
+    try {
+      const res = await fetch("http://192.168.200.1:5000/networks");
+      const data = await res.json();
+
+      return data.networks.map((network: any): AvailableNetwork => ({
+        ssid: network.ssid,
+        bssid: network.bssid,
+        channel: Number(network.channel),
+        encryption: network.security,
+        frequency_mhz: Number(network.frequency_mhz),
+      }));
+    } catch (err) {
+      // console.error(err);
+      return null;
+    }
   }
 
   async startScan(req: StartScanRequest) {
+    const prefs: ScanPrefs = getScanPrefs();
+
     if (this.activeScan) {
       throw new Error('BUSY');
     }
-    const scan_id = `scan-${Date.now()}`;
+
+    let scan_id: string;
     const durationSec = req.duration_sec ?? 60;
-    this.activeScan = { scan_id, req, startedAt: Date.now(), durationSec };
+
+    try {
+      const res = await fetch("http://192.168.200.1:5000/scan", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bssid: req.bssid,
+          psk: req.password,
+          duration: prefs.default_duration_sec
+        })
+      });
+      const data = await res.json();
+      scan_id = data.scan_id
+      this.activeScan = { scan_id, req, startedAt: Date.now(), durationSec };
+    } catch (err) {
+      console.error(err);
+      this.activeScan = null;
+      return;
+    }
+
 
     // Emit periodic STATUS_UPDATEs.
-    const tick = () => {
+    const tick = async () => {
       if (!this.activeScan) return;
-      const pct = this.computeProgressPct();
-      const elapsed = Math.floor((Date.now() - this.activeScan.startedAt) / 1000);
-      const state: ScanState =
-        pct < 5 ? 'INITIALIZING' :
-        pct < 15 ? 'CONNECTING' :
-        pct < 90 ? 'SCANNING' :
-        pct < 100 ? 'ANALYZING' :
-        'COMPLETED';
-      const update: StatusUpdate = {
-        scan_id: this.activeScan.scan_id,
-        state,
-        progress_pct: pct,
-        current_module: pct < 50 ? 'ARP_SPOOFING' : 'EVIL_TWIN',
-        elapsed_sec: elapsed,
-      };
-      this.statusListeners.forEach((l) => l(update));
-      if (pct >= 100) {
-        this.finishScan();
+
+      try {
+        const res = await fetch(`http://192.168.200.1:5000/scan/status?scan_id=${scan_id}`);
+        const data = await res.json();
+
+        const state: ScanState = data.scan.status;
+        const pct = statusToPct[state] ?? 0;
+        const elapsed = Math.floor((Date.now() - this.activeScan.startedAt) / 1000);
+        const update: StatusUpdate = {
+          scan_id: this.activeScan.scan_id,
+          state,
+          progress_pct: pct,
+          current_module: pct < 50 ? 'ARP_SPOOFING' : 'EVIL_TWIN',
+          elapsed_sec: elapsed,
+        };
+
+        if (pct >= 100) {
+          await this.finishScan();
+        }
+        this.statusListeners.forEach((l) => l(update));
+      } catch (err) {
+        console.error(err);
+        this.stopScan(this.activeScan.scan_id);
       }
     };
+
     this.activeScanTimer = setInterval(tick, 500);
 
     return { scan_id, estimated_duration_sec: durationSec };
@@ -253,14 +300,19 @@ class MockHoneypotTransport implements HoneypotTransport {
 
   async stopScan(scan_id: string) {
     if (!this.activeScan || this.activeScan.scan_id !== scan_id) {
+      this.activeScan = null
       throw new Error('SCAN_NOT_FOUND');
     }
-    this.finishScan();
+    await this.finishScan();
   }
 
   async getResult(scan_id: string): Promise<ScanResult> {
     const idx = this.completedResults.findIndex((r) => r.client_scan_id === scan_id);
-    if (idx === -1) throw new Error('SCAN_NOT_FOUND');
+    console.log("getResult() początek - completedResults", this.completedResults)
+    if (idx === -1) {
+      this.activeScan = null;
+      throw new Error('SCAN_NOT_FOUND');
+    }
     const [result] = this.completedResults.splice(idx, 1);
     return result;
   }
@@ -278,16 +330,44 @@ class MockHoneypotTransport implements HoneypotTransport {
     return Math.min(100, Math.round((elapsedMs / (this.activeScan.durationSec * 1000)) * 100));
   }
 
-  private finishScan() {
+  private async finishScan() {
     if (!this.activeScan) return;
     const { scan_id, req, startedAt, durationSec } = this.activeScan;
     if (this.activeScanTimer) clearInterval(this.activeScanTimer);
     this.activeScanTimer = null;
 
+    const device_info = await this.getDeviceInfo();
+
+    console.log("finishScan: Before fetch", this.activeScan)
+    let data
+    try {
+      const res = await fetch(`http://192.168.200.1:5000/scan/status?scan_id=${scan_id}`);
+      data = await res.json();
+    } catch (err) {
+      console.error(err);
+      this.stopScan(this.activeScan.scan_id);
+    }
+    console.log("finishScan: After data fetch", this.activeScan)
+
+
+    const state: ScanState = data.scan.status;
+
     const completedAt = new Date().toISOString();
     const startedIso = new Date(startedAt).toISOString();
 
-    const attacks: Attack[] = synthesizeAttacks(req.ssid);
+    // const attacks: Attack[] = synthesizeAttacks(req.ssid);
+    let attacks: Attack[] = [];
+    try {
+      const res = await fetch(`http://192.168.200.1:5000/alerts?scan_id=${scan_id}`);
+      const alerts = await res.json();
+      attacks = alerts["alerts"];
+      console.error(attacks)
+    } catch (err) {
+      console.error(err);
+      this.stopScan(this.activeScan.scan_id);
+    }
+    console.log("finishScan: After attacks fetch", this.activeScan)
+
     const score = computeSafetyScore(attacks);
 
     const result: ScanResult = {
@@ -295,15 +375,15 @@ class MockHoneypotTransport implements HoneypotTransport {
       network: {
         ssid: req.ssid,
         bssid: req.bssid,
-        channel: MOCK_NETWORKS.find((n) => n.bssid === req.bssid)?.channel ?? 6,
-        encryption_type: MOCK_NETWORKS.find((n) => n.bssid === req.bssid)?.encryption ?? 'OPEN',
-        frequency_mhz: MOCK_NETWORKS.find((n) => n.bssid === req.bssid)?.frequency_mhz ?? 2437,
+        channel: req.channel,
+        encryption_type: req.encryption_type,
+        frequency_mhz: req.frequency_mhz,
       },
       safety_score: score,
       scan_duration_sec: durationSec,
       attacks,
-      device_hardware_id: 'rpi-serial-mock',
-      firmware_version: '1.2.0',
+      device_hardware_id: device_info.hardware_model,
+      firmware_version: device_info.firmware_version,
       started_at: startedIso,
       completed_at: completedAt,
     };
@@ -320,6 +400,7 @@ class MockHoneypotTransport implements HoneypotTransport {
         message: 'Scan complete',
       }),
     );
+    console.log("finishScan: End", this.activeScan)
   }
 }
 

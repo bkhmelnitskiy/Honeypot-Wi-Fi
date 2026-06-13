@@ -35,10 +35,24 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     let mounted = true;
-    honeypot.ping()
-      .then((s) => mounted && setDeviceStatus(s))
-      .catch(() => mounted && setDeviceStatus(null));
-    return () => { mounted = false; };
+
+    const updateDeviceStatus = async () => {
+      try {
+        const status = await honeypot.ping();
+        if (mounted) setDeviceStatus(status);
+      } catch {
+        if (mounted) setDeviceStatus(null);
+      }
+    };
+
+    updateDeviceStatus();
+
+    const interval = setInterval(updateDeviceStatus, 5000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   return (

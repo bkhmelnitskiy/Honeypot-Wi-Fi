@@ -8,6 +8,7 @@ import {
   type Attack,
   type Scan,
 } from '@/constants/db';
+import { CryptoDigestAlgorithm, CryptoEncoding, digestStringAsync } from 'expo-crypto';
 import { api } from './api';
 
 type SyncSummary = {
@@ -19,16 +20,23 @@ type SyncSummary = {
 
 export async function syncPending(maxBatchSize = 25): Promise<SyncSummary> {
   const rows = getPendingUploads(maxBatchSize);
+  console.error(rows)
   const summary: SyncSummary = { attempted: rows.length, uploaded: 0, failed: 0, errors: [] };
   if (rows.length === 0) return summary;
 
   const scans = rows
     .map((r) => getScanByClientId(r.client_scan_id))
     .filter((s): s is Scan => s != null);
+  
+  console.error(scans)
 
   const payload = {
-    scans: scans.map((s) => buildSyncPayload(s)),
+    scans: await Promise.all(
+    scans.map((s) => buildSyncPayload(s))
+  ),
   };
+
+  console.error(payload);
 
   // Mark all as in-flight before the call.
   for (const r of rows) updateQueueStatus(r.client_scan_id, 'IN_FLIGHT');
@@ -63,6 +71,7 @@ export async function syncPending(maxBatchSize = 25): Promise<SyncSummary> {
       }
     }
   } catch (err: any) {
+    console.error(err)
     const message = err?.message ?? 'Network error';
     for (const r of rows) {
       updateQueueStatus(r.client_scan_id, 'FAILED', message);
@@ -79,7 +88,7 @@ export async function syncSingle(clientScanId: string): Promise<void> {
   if (!scan) throw new Error('Scan not found locally');
   updateQueueStatus(clientScanId, 'IN_FLIGHT');
   try {
-    const body = buildSyncPayload(scan);
+    const body = await buildSyncPayload(scan);
     const res = await api<{ server_scan_id: string; network_id: string; accepted: boolean }>(
       '/sync',
       { method: 'POST', body },
@@ -93,11 +102,12 @@ export async function syncSingle(clientScanId: string): Promise<void> {
   }
 }
 
-function buildSyncPayload(scan: Scan) {
+async function buildSyncPayload(scan: Scan) {
   const attacks: Attack[] = getAttacksForScan(scan.id);
-  return {
+
+  const ordered = {
     client_scan_id: scan.client_scan_id,
-    network: { ssid: scan.network, bssid: null, channel: null, encryption_type: null },
+    network: { ssid: scan.network, bssid: scan.network_id, channel: scan.channel, encryption_type: scan.en },
     safety_score: scan.safety_score,
     scan_duration_sec: scan.scan_duration_sec,
     scan_config: { modules: ['ALL'], duration: scan.scan_duration_sec ?? 60 },
@@ -106,6 +116,20 @@ function buildSyncPayload(scan: Scan) {
     firmware_version: scan.firmware_version,
     started_at: scan.started_at,
     completed_at: scan.completed_at,
-    payload_hash: scan.payload_hash,
+  }
+
+  const serialized = JSON.stringify(ordered);
+
+  const payload_hash = await digestStringAsync(
+    CryptoDigestAlgorithm.SHA256,
+    serialized,
+    { encoding: CryptoEncoding.HEX },
+  );
+
+  const payload = {
+    ...ordered,
+    payload_hash
   };
+
+  return payload;
 }

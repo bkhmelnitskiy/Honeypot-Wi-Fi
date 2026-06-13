@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,31 +15,50 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { honeypot, type AvailableNetwork, type DeviceStatus } from '@/services/honeypot';
+import { getScanPrefs, type ScanPrefs } from '@/services/preferences';
 import { runScan, type ScanProgress } from '@/services/scan_manager';
 import { syncPending } from '@/services/sync_engine';
+import Dialog from "react-native-dialog";
 
 export default function ScanScreen() {
   const router = useRouter();
-  const [networks, setNetworks] = useState<AvailableNetwork[]>([]);
+  const [networks, setNetworks] = useState<AvailableNetwork[] | null>([]);
   const [selected, setSelected] = useState<AvailableNetwork | null>(null);
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState<ScanProgress | null>(null);
   const [refreshingList, setRefreshingList] = useState(false);
   const [deviceStatus, setDeviceStatus] = useState<DeviceStatus | null>(null);
+  const [isPasswordNeeded, setIsPasswordNeeded] = useState<boolean>(false);
+  const [password, setPassword] = useState<string>("");
+  const [prefs] = useState<ScanPrefs>(getScanPrefs());
 
-  const refreshDevice = useCallback(async () => {
-    try {
-      const s = await honeypot.ping();
-      setDeviceStatus(s);
-    } catch {
-      setDeviceStatus(null);
-    }
+  useEffect(() => {
+    let mounted = true;
+
+    const updateDeviceStatus = async () => {
+      try {
+        const status = await honeypot.ping();
+        if (mounted) setDeviceStatus(status);
+      } catch {
+        if (mounted) setDeviceStatus(null);
+      }
+    };
+
+    updateDeviceStatus();
+
+    const interval = setInterval(updateDeviceStatus, 5000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, []);
+  
 
   const refreshNetworks = useCallback(async () => {
     setRefreshingList(true);
     try {
-      const list = await honeypot.listNetworks(5);
+      const list = await honeypot.listNetworks();
       setNetworks(list);
     } catch (e: any) {
       Alert.alert('Could not list networks', e?.message ?? 'Try again.');
@@ -48,19 +67,8 @@ export default function ScanScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshDevice();
-      if (networks.length === 0) refreshNetworks();
-    }, [refreshDevice, refreshNetworks, networks.length]),
-  );
 
-  useEffect(() => {
-    const unsub = honeypot.onStateChange(() => refreshDevice());
-    return () => { unsub(); };
-  }, [refreshDevice]);
 
-  const estimatedSec = 60;
 
   async function handleScan() {
     if (!selected || scanning) return;
@@ -71,11 +79,21 @@ export default function ScanScreen() {
       ]);
       return;
     }
+
+    if (selected.encryption) {
+      setIsPasswordNeeded(true);
+    } else {
+      doScan();
+    }
+  }
+
+  async function doScan() {
+    setIsPasswordNeeded(false);
     setScanning(true);
     setProgress({ scan_id: '', state: 'INITIALIZING', progress_pct: 0, elapsed_sec: 0 });
     try {
       const { localScanId } = await runScan(
-        { ssid: selected.ssid, bssid: selected.bssid, duration_sec: estimatedSec },
+        { ssid: selected.ssid, bssid: selected.bssid, channel: selected.channel, encryption_type: selected.encryption, duration_sec: prefs.default_duration_sec, password: password, frequency_mhz: selected.frequency_mhz },
         { onProgress: (p) => setProgress(p) },
       );
       // Fire-and-forget background sync once a scan is queued.
@@ -87,11 +105,20 @@ export default function ScanScreen() {
       setScanning(false);
       setProgress(null);
     }
-  }
+  } 
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.container}>
+        <Dialog.Container visible={isPasswordNeeded}>
+          <Dialog.Title>Account delete</Dialog.Title>
+          <Dialog.Description>
+            Do you want to delete this account? You cannot undo this action.
+          </Dialog.Description>
+          <Dialog.Input label="Password" value={password} onChangeText={setPassword}/>
+          <Dialog.Button label="Cancel" onPress={() => {setIsPasswordNeeded(false)}} />
+          <Dialog.Button label="Delete" onPress={doScan} />
+        </Dialog.Container>
         <View style={styles.topRow}>
           <View style={styles.scanButtonWrap}>
             <Pressable
@@ -111,7 +138,7 @@ export default function ScanScreen() {
               ) : (
                 <>
                   <Text style={styles.scanLabel}>Scan</Text>
-                  <Text style={styles.scanEstTime}>Est. time ~{estimatedSec}s</Text>
+                  <Text style={styles.scanEstTime}>Est. time ~{prefs.default_duration_sec}s</Text>
                 </>
               )}
             </Pressable>
@@ -177,7 +204,7 @@ export default function ScanScreen() {
                     {item.ssid}
                   </Text>
                   <Text style={styles.networkMeta}>
-                    {item.encryption} · ch{item.channel} · {item.signal_dbm} dBm
+                    {item.encryption} · ch{item.channel} · {item.bssid}
                   </Text>
                 </View>
                 {isSelected && (

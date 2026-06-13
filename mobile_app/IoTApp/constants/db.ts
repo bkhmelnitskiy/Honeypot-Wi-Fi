@@ -2,12 +2,14 @@ import * as SQLite from 'expo-sqlite';
 
 const db = SQLite.openDatabaseSync('myapp.db');
 
+// TODO zmienić ten typ
 export type Scan = {
   id: number;
   server_scan_id: string | null;
   client_scan_id: string;
   network: string;
   network_id: string | null;
+  channel: number | null;
   safety_score: number | null;
   scan_duration_sec: number | null;
   attacks: string;
@@ -63,6 +65,7 @@ export function initDB() {
       client_scan_id TEXT NOT NULL UNIQUE,
       network TEXT NOT NULL,
       network_id TEXT,
+      channel INTEGER,
       safety_score REAL,
       scan_duration_sec INTEGER,
       attacks TEXT NOT NULL DEFAULT '[]',
@@ -144,6 +147,7 @@ export type NewScan = {
   client_scan_id: string;
   network: string;
   network_id?: string | null;
+  channel?: number | null;
   safety_score: number | null;
   scan_duration_sec: number | null;
   attacks: Attack[];
@@ -157,13 +161,14 @@ export type NewScan = {
 export function insertScan(scan: NewScan): number {
   const result = db.runSync(
     `INSERT INTO scans
-      (client_scan_id, network, network_id, safety_score, scan_duration_sec, attacks,
+      (client_scan_id, network, network_id, channel, safety_score, scan_duration_sec, attacks,
        device_hardware_id, firmware_version, started_at, completed_at, payload_hash)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       scan.client_scan_id,
       scan.network,
       scan.network_id ?? null,
+      scan.channel ?? null,
       scan.safety_score,
       scan.scan_duration_sec,
       JSON.stringify(scan.attacks ?? []),
