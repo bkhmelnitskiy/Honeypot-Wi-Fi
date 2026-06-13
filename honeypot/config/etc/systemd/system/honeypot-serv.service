@@ -1,0 +1,13 @@
+[Unit]
+Description=Honeypot server
+fter=dnsmasq.service
+Requires=dnsmasq.service
+
+[Service]
+ExecStart=/usr/bin/python3 /home/user/honeypot/service/server.py
+WorkingDirectory=/home/user/honeypot/service
+Restart=on-failure
+RestartSec=2s
+
+[Install]
+WantedBy=multi-user.target

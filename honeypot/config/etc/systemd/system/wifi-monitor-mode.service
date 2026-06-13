@@ -1,0 +1,15 @@
+[Unit]
+Description=WiFi monitor mode setup
+After=network-pre.target honeypot-serv.service
+Wants=network-pre.target
+Requires=honeypot-serv.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wifi-monitor-setup.sh
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
