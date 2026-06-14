@@ -1,0 +1,980 @@
+{
+  "info": {
+    "_postman_id": "7b8791c3-dffa-46bb-8445-9ab6823444e1",
+    "name": "Honeypot API",
+    "description": "Wi-Fi Honeypot platform REST API — local dev (http://localhost:3000/api/v1)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46861240",
+    "_collection_link": "https://go.postman.co/collection/46861240-7b8791c3-dffa-46bb-8445-9ab6823444e1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has user_id', () => pm.expect(json).to.have.property('user_id'));",
+                  "pm.test('Has email', () => pm.expect(json).to.have.property('email'));",
+                  "pm.test('Has display_name', () => pm.expect(json).to.have.property('display_name'));",
+                  "if (json.user_id) pm.collectionVariables.set('user_id', json.user_id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('test_email', `aaa@aaa.com`);",
+                  "pm.collectionVariables.set('test_password', '1qaz!QAZ');",
+                  "pm.collectionVariables.set('test_display_name', 'Test User');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"display_name\": \"{{test_display_name}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has access_token', () => pm.expect(json).to.have.property('access_token'));",
+                  "pm.test('Has refresh_token', () => pm.expect(json).to.have.property('refresh_token'));",
+                  "if (json.access_token) pm.collectionVariables.set('access_token', json.access_token);",
+                  "if (json.refresh_token) pm.collectionVariables.set('refresh_token', json.refresh_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.access_token) pm.collectionVariables.set('access_token', json.access_token);",
+                  "if (json.refresh_token) pm.collectionVariables.set('refresh_token', json.refresh_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has user_id', () => pm.expect(json).to.have.property('user_id'));",
+                  "pm.test('Has email', () => pm.expect(json).to.have.property('email'));",
+                  "pm.test('Has total_scans', () => pm.expect(json).to.have.property('total_scans'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has updated_at', () => pm.expect(pm.response.json()).to.have.property('updated_at'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"New Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sync",
+      "item": [
+        {
+          "name": "Upload Scan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has server_scan_id', () => pm.expect(json).to.have.property('server_scan_id'));",
+                  "pm.test('Has network_id', () => pm.expect(json).to.have.property('network_id'));",
+                  "pm.test('accepted is true', () => pm.expect(json.accepted).to.be.true);",
+                  "if (json.server_scan_id) pm.collectionVariables.set('scan_id', json.server_scan_id);",
+                  "if (json.network_id) pm.collectionVariables.set('network_id', json.network_id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random UUID for client_scan_id",
+                  "const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {",
+                  "  const r = Math.random() * 16 | 0;",
+                  "  return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);",
+                  "});",
+                  "const clientScanId = uuid();",
+                  "pm.collectionVariables.set('client_scan_id', clientScanId);",
+                  "",
+                  "const canonical = {",
+                  "  client_scan_id: clientScanId,",
+                  "  network: {",
+                  "    ssid: 'FreeWiFi',",
+                  "    bssid: 'AA:BB:CC:DD:EE:FF',",
+                  "    channel: 6,",
+                  "    encryption_type: 'OPEN',",
+                  "    frequency_mhz: 2437,",
+                  "    gps_latitude: 50.0647,",
+                  "    gps_longitude: 19.945",
+                  "  },",
+                  "  safety_score: 67.9,",
+                  "  scan_duration_sec: 120,",
+                  "  scan_config: { modules: ['ALL'], duration: 120 },",
+                  "  attacks: [{",
+                  "    attack_type: 'ARP_SPOOFING',",
+                  "    severity: 'HIGH',",
+                  "    confidence: 0.87,",
+                  "    detected_at: '2026-05-05T10:29:15Z',",
+                  "    details: { attacker_mac: 'XX:XX:XX:XX:XX:XX', target_ip: '192.168.1.1' }",
+                  "  }],",
+                  "  device_hardware_id: 'rpi-serial-xxxx',",
+                  "  firmware_version: '1.2.0',",
+                  "  started_at: '2026-05-05T10:28:00Z',",
+                  "  completed_at: '2026-05-05T10:30:00Z'",
+                  "};",
+                  "",
+                  "// SHA-256 using inline require to avoid redeclaration",
+                  "const hash = require('crypto-js').SHA256(JSON.stringify(canonical)).toString();",
+                  "pm.collectionVariables.set('payload_hash', hash);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_scan_id\": \"{{client_scan_id}}\",\n  \"network\": {\n    \"ssid\": \"FreeWiFi\",\n    \"bssid\": \"AA:BB:CC:DD:EE:FF\",\n    \"channel\": 6,\n    \"encryption_type\": \"OPEN\",\n    \"frequency_mhz\": 2437,\n    \"gps_latitude\": 50.0647,\n    \"gps_longitude\": 19.945\n  },\n  \"safety_score\": 67.9,\n  \"scan_duration_sec\": 120,\n  \"scan_config\": {\n    \"modules\": [\n      \"ALL\"\n    ],\n    \"duration\": 120\n  },\n  \"attacks\": [\n    {\n      \"attack_type\": \"ARP_SPOOFING\",\n      \"severity\": \"HIGH\",\n      \"confidence\": 0.87,\n      \"detected_at\": \"2026-05-05T10:29:15Z\",\n      \"details\": {\n        \"attacker_mac\": \"XX:XX:XX:XX:XX:XX\",\n        \"target_ip\": \"192.168.1.1\"\n      }\n    }\n  ],\n  \"device_hardware_id\": \"rpi-serial-xxxx\",\n  \"firmware_version\": \"1.2.0\",\n  \"started_at\": \"2026-05-05T10:28:00Z\",\n  \"completed_at\": \"2026-05-05T10:30:00Z\",\n  \"payload_hash\": \"{{payload_hash}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/sync",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sync"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sync/status?limit=100",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sync",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "since",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Upload",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(207));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scans\": [\n    {\n      \"client_scan_id\": \"550e8400-e29b-41d4-a716-446655440002\",\n      \"network\": {\n        \"ssid\": \"CafeWiFi\",\n        \"bssid\": \"11:22:33:44:55:66\",\n        \"channel\": 1,\n        \"encryption_type\": \"WPA2\",\n        \"frequency_mhz\": 2412\n      },\n      \"safety_score\": 85.0,\n      \"scan_duration_sec\": 90,\n      \"attacks\": [],\n      \"device_hardware_id\": \"rpi-serial-xxxx\",\n      \"firmware_version\": \"1.2.0\",\n      \"started_at\": \"2026-05-04T09:00:00Z\",\n      \"completed_at\": \"2026-05-04T09:01:30Z\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/sync/batch",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sync",
+                "batch"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Scans",
+      "item": [
+        {
+          "name": "List Scans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has scans array', () => pm.expect(json.scans).to.be.an('array'));",
+                  "pm.test('Has total', () => pm.expect(json).to.have.property('total'));",
+                  "if (json.scans && json.scans.length > 0 && !pm.collectionVariables.get('scan_id')) {",
+                  "  pm.collectionVariables.set('scan_id', json.scans[0].server_scan_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/scans?per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scans"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                },
+                {
+                  "key": "network_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "since",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Scan by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has server_scan_id', () => pm.expect(json).to.have.property('server_scan_id'));",
+                  "pm.test('Has attacks array', () => pm.expect(json.attacks).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/scans/{{scan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "scans",
+                "{{scan_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Networks",
+      "item": [
+        {
+          "name": "List Networks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has networks array', () => pm.expect(json.networks).to.be.an('array'));",
+                  "pm.test('Has total', () => pm.expect(json).to.have.property('total'));",
+                  "if (json.networks && json.networks.length > 0 && !pm.collectionVariables.get('network_id')) {",
+                  "  pm.collectionVariables.set('network_id', json.networks[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/networks?per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "networks"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "safety_score",
+                  "disabled": true
+                },
+                {
+                  "key": "order",
+                  "value": "asc",
+                  "disabled": true
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                },
+                {
+                  "key": "min_scans",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "lat",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "lng",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "radius_km",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Network by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has bssid', () => pm.expect(json).to.have.property('bssid'));",
+                  "pm.test('Has attack_summary', () => pm.expect(json).to.have.property('attack_summary'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/networks/{{network_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "networks",
+                "{{network_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stats",
+      "item": [
+        {
+          "name": "Global Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has total_scans', () => pm.expect(json).to.have.property('total_scans'));",
+                  "pm.test('Has attack_distribution', () => pm.expect(json).to.have.property('attack_distribution'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stats/global",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stats",
+                "global"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Attack Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has severity_distribution', () => pm.expect(json).to.have.property('severity_distribution'));",
+                  "pm.test('Has trend', () => pm.expect(json.trend).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stats/attacks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stats",
+                "attacks"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "ARP_SPOOFING",
+                  "disabled": true
+                },
+                {
+                  "key": "since",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "network_id",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));",
+                  "// access_token remains valid (stateless JWT) so Delete Account can still authenticate",
+                  "pm.collectionVariables.set('refresh_token', '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "scan_id",
+      "value": ""
+    },
+    {
+      "key": "network_id",
+      "value": ""
+    },
+    {
+      "key": "client_scan_id",
+      "value": ""
+    },
+    {
+      "key": "payload_hash",
+      "value": ""
+    },
+    {
+      "key": "test_email",
+      "value": ""
+    },
+    {
+      "key": "test_password",
+      "value": ""
+    },
+    {
+      "key": "test_display_name",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": ""
+    }
+  ]
+}
