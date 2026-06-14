@@ -85,7 +85,7 @@ Restart the device:
 sudo reboot
 ```
 
-After rebooting, the device should start all services automatically and be ready for operation.
+After rebooting, the device should automatically start all services and be ready for operation. The minimum requirement is one Wi-Fi adapter for hostapd and one Wi-Fi adapter for ARP spoofing, DNS spoofing, and network scan detection. An additional Wi-Fi adapter operating in monitor mode is required if you want to run the Evil Twin detector.
 
 # How to use honeypot?
 
