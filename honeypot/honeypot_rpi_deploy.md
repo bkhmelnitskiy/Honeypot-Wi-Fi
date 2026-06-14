@@ -1,4 +1,4 @@
-1. Install dependencies
+# 1. Install dependencies
 
 ```bash
 sudo apt update
@@ -14,7 +14,7 @@ sudo apt install -y \
     golang
 ```
 
-2. Configure System Files
+# 2. Configure System Files
 
 Copy the contents of the config/ directory into their corresponding system locations.
 
@@ -38,7 +38,7 @@ chmod +x /usr/local/bin/wifi-monitor-setup.sh
 etc/hostapd/hostapd.conf
 ```
 
-3. Build the WiFi Component
+# 3. Build the WiFi Component
 
 Compile the Go application located in honeypot/wifi:
 
@@ -52,8 +52,8 @@ Move the resulting binary to:
 /home/user/wifi/
 ```
 
-4. Enable Services
-
+# 4. Enable Services
+ 
 Reload systemd and enable all required services:
 
 ```bash
@@ -66,7 +66,7 @@ sudo systemctl enable dnsmasq
 sudo systemctl enable hostapd
 ```
 
-5. Deploy the Honeypot
+# 5. Deploy the Honeypot
 
 Move the honeypot/ directory to:
 
@@ -76,7 +76,7 @@ Move the honeypot/ directory to:
 
 If you choose a different location, update all relevant paths in the systemd service files before continuing.
 
-6. Reboot
+# 6. Reboot
 
 Restart the device:
 
