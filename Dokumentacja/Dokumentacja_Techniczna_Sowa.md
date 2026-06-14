@@ -44,7 +44,7 @@
 
 ### 6. Spięcie ze skanem i warstwą urządzenia
 - Menedżer cyklu życia skanu: lista sieci → wybór → start → oczekiwanie → wynik → zapis lokalny → kolejka uploadu (scan_manager.ts)
-- Integracja z warstwą komunikacji z urządzeniem honeypot przez wspólny interfejs transportu (kontrakt BLE/honeypot — zob. Dokumentacja_Techniczna_Pitera.md, sekcja 4), co pozwoliło rozwijać całą aplikację na implementacji zastępczej bez fizycznie podłączonego urządzenia
+- Integracja z warstwą komunikacji z urządzeniem honeypot przez wspólny interfejs transportu (plik BLE/honeypot — zob. Dokumentacja_Techniczna_Pitera.md, sekcja 4), co pozwoliło rozwijać całą aplikację na implementacji zastępczej bez fizycznie podłączonego urządzenia
 
 ### 7. Rozważane, lecz nie zaimplementowane
 - Mapa sieci (filtrowanie po GPS gotowe w API, brak widoku mapy)
