@@ -22,7 +22,7 @@
     - Pierwotnie urządzenie miało działać w oparciu o 2 karty sieciowe
 
 - Implmenetacja orkiestratora działającego po HTTP na porcie 5000 jako usługa systemowa w oparciu o bilbiotekę Flask [server.py](/honeypot/service/server.py)
-    - to rozwiązanie miało być jedynie PoC pokzaującym, że jeśli rozwiązanie oparte na Bluetooth nie zostanie wdrożone na czas, to możliwe jest zastąpienie go komunikacją po przez serwer HTTP postawiony na AP za pomocą hostapd - minusem tego rozwiązania jest to, że wykorzystywane są 3 karty sieciowe
+    - to rozwiązanie miało być jedynie PoC pokzaującym, że jeśli rozwiązanie oparte na Bluetooth nie zostanie wdrożone na czas, to możliwe jest zastąpienie go komunikacją poprzez serwer HTTP postawiony na AP za pomocą hostapd - minusem tego rozwiązania jest to, że wykorzystywane są 3 karty sieciowe
     - GET '/health' - zwraca informacje o gotowości orkiestratora do pracy (w tym informacje o dostępnych kartach sieciowych)
     - GET '/device_info' - zwraca między innymi nazwę urządzenia, firmware i ilość wykonanych skanów
     - GET '/device_status' - zwraca informację o aktualnie wykonywanym skanie i część informacji z endpointu '/device_info'
@@ -51,3 +51,8 @@
     - [wifi-monitor-mode](/honeypot/config/etc/systemd/system/wifi-monitor-mode.service) - prostego [skryptu](/honeypot/config/usr/local/bin/wifi-monitor-setup.sh) ustawiającego kartę sieciową w tryb monitor 
     
 - Ustawienie stałych nazw interfejsów sieciowych w [systemd](/honeypot/config/etc/systemd/network/)
+
+## Rozważane, ale niedodane
+
+- Integracja komunikacji poprzez Bluetooth
+- Wyposażenie honeypota w nieaktualizowane, podatne usługi, które byłyby monitorowane pod kątem prób ataków
