@@ -17,17 +17,19 @@
 
 ### 3. Strona internetowa (pierwsze doświadczenie z frontend development)
 - Ikony zmienione w stylowalne assety Vue.js ([components/icons](../web-frontend/src/components/icons))
-- Adaptacja logiki stworzonej przez Michała do potrzeb rozkładu strony ([components](../web-frontend/src/components) i [views](../web-frontend/src/views))
+- Adaptacja [logiki stworzonej przez Michała](Dokumentacja_Techniczna_Pitera.md/#3-web-frontend--komunikacja-z-api-axios) do potrzeb rozkładu strony ([components](../web-frontend/src/components) i [views](../web-frontend/src/views))
 - Rozkład strony zgodnie z projektem
 - Nawigacja sidebar ([Sidebar.vue](../web-frontend/src/components/Sidebar.vue))
 - Stylizacja każdej podstrony zgdonie z projektem:
-    - Rozkład i stylizacja każdego z komponentów w [web-frontend/src/components](../web-frontend/src/components)
-    - Rozkład i stylizacja każdego z widoków w [web-frontend/src/views](../web-frontend/src/views)
+    - Rozkład i stylizacja każdego z komponentów w [web-frontend/src/components](../web-frontend/src/components) (HTML + JS + [SASS](https://sass-lang.com/))
+    - Rozkład i stylizacja każdego z widoków w [web-frontend/src/views](../web-frontend/src/views) (HTML + JS + [SASS](https://sass-lang.com/))
     - Responsywne pola input
     - Stylizowane scrollowalne listy skanów i parametrów
+    - Stylizowanie "upartych" elementów - wybory dropdown, wybór daty - w miarę możliwości
     - Kolorowanie wyników bezpieczeństwa w zależności od wartości
     - Nauka oraz implementacja dynamicznego rozkładu strony w zależności od wymiarów okna przeglądarki
 - Obsługa [chart.js](https://www.chartjs.org/) do wyświetlania wykresu aktywności
 - Testowanie szyku strony na różnym sprzęcie (inne komputery, zmiana rozmiaru okna przeglądarki, telefon)
 - Rozważane, lecz nie zaimplementowane:
     - Mapa skanów
+    - Dedykowana strona mobilna (podwojenie narzutu pracy, więc od początku założenie utworzenia aplikacji mobilnej + strony desktopowej)
