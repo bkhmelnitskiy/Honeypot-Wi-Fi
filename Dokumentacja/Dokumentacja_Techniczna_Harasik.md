@@ -2,6 +2,8 @@
 
 ## Backend honeypota
 
+- Znalezienie podobnych do tworzonego projektu rozwiązań
+
 - Opracowanie zestawu detektorów
     - arp spoofing
     - dns spoofing
@@ -9,18 +11,18 @@
     - network scan
 
 - Implementacja poszczególnych modułów w oparciu o bibliotekę scapy oraz unbound
-    - pliki modułów znajdują się w folderze [honeypot/scanner/](/honeypot/scanner/)
+    - Pliki modułów znajdują się w folderze [honeypot/scanner/](/honeypot/scanner/)
     - [wifi_api_client.py](/honeypot/scanner/wifi_api_client.py) - interfejs do programu wifi napisanego przez Łukasza 
     - [interface_manager.py](/honeypot/scanner/interface_manager.py) - klasa obsługująca pobieranie interfejsów sieciowych
     - [launcher.py](/honeypot/scanner/launcher.py) - logika agregatora alertów oraz uruchamiania detektorów w wątkach
 
 - Implementacja pierwszego orkiestratora, która ostatecznie została porzucona [orchestrator.py](/honeypot/orchestrator.py)
-    - orkiestrator komunikuje się poprzez bibliotekę requests z API programu wifi w celu podłączenia się do sieci
-    - następnie przeprowadza skany i wypisuje odpowiednie logi w CLI
-    - pierwotnie urządzenie miało działać w oparciu o 2 karty sieciowe
+    - Orkiestrator komunikuje się poprzez bibliotekę requests z API programu wifi w celu podłączenia się do sieci
+    - Następnie przeprowadza skany i wypisuje odpowiednie logi w CLI
+    - Pierwotnie urządzenie miało działać w oparciu o 2 karty sieciowe
 
 - Implmenetacja orkiestratora działającego po HTTP na porcie 5000 jako usługa systemowa w oparciu o bilbiotekę Flask [server.py](/honeypot/service/server.py)
-    - to rozwiązanie miało być jedynie PoC pokzaującym, że jeśli rozwiązanie oparte na Bluetooth nie zostanie wdrożone na czas, to możliwe jest zastąpienie go komunikacją po przez serwer HTTP postawionym na AP za pomocą hostapd - minusem tego rozwiązania było to, że wykorzystywane są 3 karty sieciowe
+    - to rozwiązanie miało być jedynie PoC pokzaującym, że jeśli rozwiązanie oparte na Bluetooth nie zostanie wdrożone na czas, to możliwe jest zastąpienie go komunikacją po przez serwer HTTP postawiony na AP za pomocą hostapd - minusem tego rozwiązania jest to, że wykorzystywane są 3 karty sieciowe
     - GET '/health' - zwraca informacje o gotowości orkiestratora do pracy (w tym informacje o dostępnych kartach sieciowych)
     - GET '/device_info' - zwraca między innymi nazwę urządzenia, firmware i ilość wykonanych skanów
     - GET '/device_status' - zwraca informację o aktualnie wykonywanym skanie i część informacji z endpointu '/device_info'
@@ -32,7 +34,7 @@
     
 ## Integracja honeypota z aplikacją mobilną
 
-- Modyfikacja mockowego interfejsu interakcji z honeypotem rzeczywistym [honeypot.ts](/mobile_app/IoTApp/services/honeypot.ts)
+- Modyfikacja mockowego interfejsu interakcji z rzeczywistym interfejsem honeypota  [honeypot.ts](/mobile_app/IoTApp/services/honeypot.ts)
 - Dodanie do aplikacji funkcjonalności kontrolki wskazującej stan urządzenia honeypot 
 - Dodanie hashowania wysyłanych na backend skanów
 - Poprawienie drobnych błędów związanych z logiką wysyłania skanów na serwer
@@ -48,4 +50,4 @@
     - [honeypot-serv](/honeypot/config/etc/systemd/system/honeypot-serv.service) - orkiestratora opartego na HTTP
     - [wifi-monitor-mode](/honeypot/config/etc/systemd/system/wifi-monitor-mode.service) - prostego [skryptu](/honeypot/config/usr/local/bin/wifi-monitor-setup.sh) ustawiającego kartę sieciową w tryb monitor 
     
-- Ustawienie stałych nazw interfejsów w [systemd](/honeypot/config/etc/systemd/network/)
+- Ustawienie stałych nazw interfejsów sieciowych w [systemd](/honeypot/config/etc/systemd/network/)
