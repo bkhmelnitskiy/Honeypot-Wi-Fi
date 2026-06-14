@@ -1,6 +1,5 @@
-# Dokumentacja techniczna — Backend, wdrożenie i komunikacja
+# Dokumentacja techniczna — Backend, wdrożenie i komunikacja, Michał Pitera
 
-**Autor części:** Michał Pitera
 **Zakres dokumentu:** projekt architektury całego systemu, backend aplikacji (webserver), zarządzanie serwerem i automatyczny deployment, komunikacja web-frontendu z API oraz próba komunikacji Bluetooth w aplikacji mobilnej.
 
 Dokument opisuje wyłącznie te fragmenty systemu, które zostały wykonane przeze mnie. Pozostałe komponenty (urządzenie honeypot — analiza pakietów, część warstwy UI mobilnej i webowej, badania wstępne) są opisane w osobnych dokumentach w katalogu [Dokumentacja/](.). Celem tej dokumentacji jest umożliwienie odtworzenia opisanych części przez osobę spoza zespołu, dlatego każda sekcja zawiera odwołania do konkretnych plików i fragmentów kodu, instrukcję uruchomienia, rozważane (ale odrzucone) alternatywy oraz wykorzystane źródła.
